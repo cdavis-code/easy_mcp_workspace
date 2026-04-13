@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/schemas/tool.json",
+  "title": "MCP Tool Definition",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Unique identifier for the tool"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of the tool"
+    },
+    "inputSchema": {
+      "$ref": "#/definitions/JsonSchema",
+      "description": "JSON-Schema for tool input parameters"
+    },
+    "icons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https://.*"
+      },
+      "description": "Icon URLs (HTTPS only)"
+    }
+  },
+  "required": ["name", "inputSchema"],
+  "definitions": {
+    "JsonSchema": {
+      "oneOf": [
+        {"type": "object"},
+        {"type": "array"},
+        {"type": "string"},
+        {"type": "number"},
+        {"type": "boolean"},
+        {"type": "null"}
+      ]
+    }
+  }
+}
