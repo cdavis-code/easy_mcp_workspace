@@ -1,0 +1,19 @@
+name: mcp_example
+description: Example usage of mcp_annotations and mcp_generator
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+
+resolution: workspace
+
+dependencies:
+  mcp_annotations:
+    path: ../packages/mcp_annotations
+  dart_mcp: ^0.5.0
+
+dev_dependencies:
+  build_runner: any
+  mcp_generator:
+    path: ../packages/mcp_generator
