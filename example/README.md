@@ -1,10 +1,10 @@
 # MCP Example
 
-Example demonstrating how to use `mcp_annotations` and `mcp_generator` with the official `dart_mcp` package.
+Example demonstrating how to use `easy_mcp_annotations` and `easy_mcp_generator` with the official `dart_mcp` package. This example showcases a realistic many-to-many domain model where **Users** and **Todos** have bidirectional relationships — a todo can be assigned to multiple users, and a user can have multiple todos.
 
 ## Prerequisites
 
-This example is part of the `easy_mcp` workspace. From the project root:
+This example is part of the `easy_mcp_workspace`. From the project root:
 
 ```bash
 dart pub get
@@ -14,17 +14,45 @@ dart pub get
 
 ### 1. Add annotations to your library
 
-Use `@Tool()` on library methods you want to expose as MCP tools:
+Use `@Mcp` on your entry point and `@Tool` on static methods you want to expose as MCP tools:
 
 ```dart
-import 'package:mcp_annotations/mcp_annotations.dart';
+// bin/example.dart
+import 'package:easy_mcp_annotations/mcp_annotations.dart';
+import 'package:mcp_example/src/user_store.dart';
+import 'package:mcp_example/src/todo_store.dart';
 
-class MyTools {
+@Mcp(transport: McpTransport.stdio)
+Future<void> main() async {
+  // Your initialization code...
+}
+```
+
+```dart
+// lib/src/user_store.dart
+class UserStore {
   @Tool(description: 'Create a new user')
-  Future<User> createUser(String name, String email) async { ... }
+  static Future<User> createUser({required String name, required String email}) async { ... }
 
   @Tool(description: 'Get user by ID')
-  Future<User?> getUser(int id) async { ... }
+  static Future<User?> getUser(int id) async { ... }
+
+  @Tool(description: 'Get all todos assigned to a user')
+  static Future<List<Todo>> getUserTodos(int userId) async { ... }
+}
+```
+
+```dart
+// lib/src/todo_store.dart
+class TodoStore {
+  @Tool(description: 'Create a new todo')
+  static Future<Todo> createTodo({required String title}) async { ... }
+
+  @Tool(description: 'Assign a todo to a user')
+  static Future<Todo?> assignTodoToUser({required int todoId, required int userId}) async { ... }
+
+  @Tool(description: 'Get all todos assigned to a user')
+  static Future<List<Todo>> getTodosForUser(int userId) async { ... }
 }
 ```
 
@@ -41,9 +69,15 @@ dart run build_runner build --delete-conflicting-outputs --watch
 ```
 
 This generates:
-- `lib/src/user.mcp.dart` — Generated MCP server using `dart_mcp`
+- `bin/example.mcp.dart` — Generated MCP server using `dart_mcp` that aggregates all tools from imported libraries
 
-### Available Tools
+The generator discovers all `@Tool`-annotated methods from libraries imported by the `@Mcp`-annotated entry point and registers them in a single MCP server.
+
+## Available Tools
+
+The generated MCP server exposes 14 tools organized by store:
+
+### UserStore (6 tools)
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
@@ -52,8 +86,28 @@ This generates:
 | `listUsers` | List all users | none |
 | `deleteUser` | Delete a user | `id` (int) |
 | `searchUsers` | Search users by query | `query` (String) |
+| `getUserTodos` | Get all todos assigned to a user | `userId` (int) |
+
+### TodoStore (8 tools)
+
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `createTodo` | Create a new todo | `title` (String) |
+| `getTodo` | Get todo by ID | `id` (int) |
+| `listTodos` | List all todos | none |
+| `deleteTodo` | Delete a todo | `id` (int) |
+| `completeTodo` | Mark a todo as completed | `id` (int) |
+| `assignTodoToUser` | Assign a todo to a user | `todoId` (int), `userId` (int) |
+| `removeTodoFromUser` | Remove a user from a todo | `todoId` (int), `userId` (int) |
+| `getTodosForUser` | Get all todos assigned to a user | `userId` (int) |
 
 ## Annotations
+
+### `@Mcp`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `transport` | `McpTransport` | `McpTransport.stdio` | Transport protocol (stdio or sse) |
 
 ### `@Tool`
 
@@ -67,7 +121,7 @@ This generates:
 After running `build_runner`, run the generated server:
 
 ```bash
-dart run example/lib/src/user.mcp.dart
+dart run example/bin/example.mcp.dart
 ```
 
 The server uses `dart_mcp` with stdio transport. It communicates via JSON-RPC 2.0 over stdin/stdout.
@@ -81,44 +135,56 @@ Use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) — t
 **List available tools**
 
 ```bash
-npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/list
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/list
 ```
 
-**Call a tool**
+**Call tools**
 
 ```bash
+# UserStore tools
+
 # Call listUsers (no parameters)
-npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name listUsers
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name listUsers
 
 # Call createUser with parameters
-npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name createUser --tool-arg 'name=Test User' --tool-arg 'email=test@example.com'
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name createUser --tool-arg 'name=Test User' --tool-arg 'email=test@example.com'
 
 # Call getUser with ID
-npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name getUser --tool-arg 'id=1'
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name getUser --tool-arg 'id=1'
 
 # Call searchUsers with query
-npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name searchUsers --tool-arg 'query=Alice'
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name searchUsers --tool-arg 'query=Alice'
 
-# Call deleteUser
-npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name deleteUser --tool-arg 'id=1'
+# Call getUserTodos
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name getUserTodos --tool-arg 'userId=1'
+
+# TodoStore tools
+
+# Call createTodo
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name createTodo --tool-arg 'title=Buy groceries'
+
+# Call listTodos
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name listTodos
+
+# Call completeTodo
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name completeTodo --tool-arg 'id=1'
+
+# Call assignTodoToUser
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name assignTodoToUser --tool-arg 'todoId=1' --tool-arg 'userId=1'
+
+# Call removeTodoFromUser
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name removeTodoFromUser --tool-arg 'todoId=1' --tool-arg 'userId=1'
+
+# Call getTodosForUser
+npx @modelcontextprotocol/inspector --cli dart run example/bin/example.mcp.dart --method tools/call --tool-name getTodosForUser --tool-arg 'userId=1'
 ```
-
-**Available tools:**
-
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `createUser` | Create a new user | `name` (String), `email` (String) |
-| `getUser` | Get user by ID | `id` (int) |
-| `listUsers` | List all users | none |
-| `deleteUser` | Delete a user | `id` (int) |
-| `searchUsers` | Search users by query | `query` (String) |
 
 **Alternative: Web UI mode**
 
 For interactive browser-based testing, run without the `--cli` flag:
 
 ```bash
-npx @modelcontextprotocol/inspector dart run example/lib/src/user.mcp.dart
+npx @modelcontextprotocol/inspector dart run example/bin/example.mcp.dart
 ```
 
 Then open `http://localhost:6274` in your browser.
@@ -128,33 +194,40 @@ Then open `http://localhost:6274` in your browser.
 ```
 example/
 ├── bin/
-│   └── example.dart         # Example with @Mcp annotation
+│   ├── example.dart          # Entry point with @Mcp annotation
+│   └── example.mcp.dart      # Generated MCP server (aggregates all tools)
 ├── lib/
 │   └── src/
-│       ├── user.dart        # Annotated source with UserStore
-│       └── user.mcp.dart    # Generated MCP server (dart_mcp)
-├── build.yaml                # Build runner configuration
+│       ├── todo.dart          # Todo model
+│       ├── todo_store.dart    # TodoStore with @Tool methods
+│       ├── user.dart          # User model
+│       └── user_store.dart    # UserStore with @Tool methods
+├── build.yaml
 └── pubspec.yaml
 ```
 
+## Data Model
+
+This example demonstrates a many-to-many relationship between Users and Todos:
+
+- **User** has `todoIds: List<int>` — references to assigned todos
+- **Todo** has `userIds: List<int>` — references to assigned users
+
+The relationship is bidirectional and managed by the assignment tools:
+- `assignTodoToUser()` — adds references in both directions
+- `removeTodoFromUser()` — removes references from both directions
+- `deleteUser()` — automatically cleans up todo references
+- `deleteTodo()` — automatically cleans up user references
+
+Data is persisted to JSON files (`users.json`, `todos.json`) in the example directory.
+
 ## Generated Code
 
-The generated `.mcp.dart` file creates a complete MCP server using `dart_mcp`:
+The generated `.mcp.dart` file creates a complete MCP server using `dart_mcp`. It imports each store with a unique alias to avoid naming conflicts:
 
 ```dart
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io' as io;
-
-import 'package:dart_mcp/server.dart';
-import 'package:dart_mcp/stdio.dart';
-
-Future<void> main() async {
-  final server = MCPServerWithTools(
-    stdioChannel(input: io.stdin, output: io.stdout),
-  );
-  await server.done;
-}
+import 'package:mcp_example/src/user_store.dart' as user_store;
+import 'package:mcp_example/src/todo_store.dart' as todo_store;
 
 base class MCPServerWithTools extends MCPServer with ToolsSupport {
   MCPServerWithTools(super.channel)
@@ -174,11 +247,54 @@ base class MCPServerWithTools extends MCPServer with ToolsSupport {
             'name': Schema.string(),
             'email': Schema.string(),
           },
+          required: ['name', 'email'],
         ),
       ),
       _createUser,
     );
-    // ... more tools
+    registerTool(
+      Tool(
+        name: 'createTodo',
+        description: 'Create a new todo',
+        inputSchema: Schema.object(
+          properties: {
+            'title': Schema.string(),
+          },
+          required: ['title'],
+        ),
+      ),
+      _createTodo,
+    );
+    registerTool(
+      Tool(
+        name: 'assignTodoToUser',
+        description: 'Assign a todo to a user',
+        inputSchema: Schema.object(
+          properties: {
+            'todoId': Schema.int(),
+            'userId': Schema.int(),
+          },
+          required: ['todoId', 'userId'],
+        ),
+      ),
+      _assignTodoToUser,
+    );
+    // ... more tools from both stores
   }
+
+  FutureOr<CallToolResult> _createUser(CallToolRequest request) async {
+    final name = request.arguments!['name'] as String;
+    final email = request.arguments!['email'] as String;
+    final result = await user_store.UserStore.createUser(name: name, email: email);
+    return CallToolResult(content: [TextContent(text: _serializeResult(result))]);
+  }
+
+  FutureOr<CallToolResult> _createTodo(CallToolRequest request) async {
+    final title = request.arguments!['title'] as String;
+    final result = await todo_store.TodoStore.createTodo(title: title);
+    return CallToolResult(content: [TextContent(text: _serializeResult(result))]);
+  }
+
+  // ... more handlers
 }
 ```

@@ -1,41 +1,66 @@
 // Example: Using mcp_annotations to expose library methods as MCP tools
-import 'package:mcp_annotations/mcp_annotations.dart';
+import 'package:easy_mcp_annotations/mcp_annotations.dart';
 import 'package:mcp_example/src/user_store.dart';
-import 'package:mcp_example/src/todo.dart';
+import 'package:mcp_example/src/todo_store.dart';
 
-@Mcp(transport: McpTransport.stdio)
+@Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0')
 Future<void> main() async {
-  // Seed some initial users if the store is empty
-  final existing = await UserStore.listUsers();
-  if (existing.isEmpty) {
-    print('Seeding initial users...');
-    await UserStore.createUser(
+  // Seed some initial data if the stores are empty
+  final existingUsers = await UserStore.listUsers();
+  if (existingUsers.isEmpty) {
+    print('Seeding initial data...');
+
+    // Create users
+    final alice = await UserStore.createUser(
       name: 'Alice Smith',
       email: 'alice@example.com',
-      todos: [
-        Todo(id: 1, title: 'Buy groceries'),
-        Todo(id: 2, title: 'Walk the dog', completed: true),
-      ],
     );
-    await UserStore.createUser(
+    final bob = await UserStore.createUser(
       name: 'Bob Jones',
       email: 'bob@example.com',
-      todos: [Todo(id: 3, title: 'Finish project')],
     );
-    await UserStore.createUser(
+    final charlie = await UserStore.createUser(
       name: 'Charlie Brown',
       email: 'charlie@example.com',
-      todos: [],
     );
+
+    // Create todos
+    final todo1 = await TodoStore.createTodo(title: 'Buy groceries');
+    final todo2 = await TodoStore.createTodo(title: 'Walk the dog');
+    await TodoStore.completeTodo(todo2.id);
+    final todo3 = await TodoStore.createTodo(title: 'Finish project');
+    final todo4 = await TodoStore.createTodo(title: 'Plan team meeting');
+
+    // Assign todos to users (many-to-many)
+    await TodoStore.assignTodoToUser(todoId: todo1.id, userId: alice.id);
+    await TodoStore.assignTodoToUser(todoId: todo2.id, userId: alice.id);
+    await TodoStore.assignTodoToUser(todoId: todo3.id, userId: bob.id);
+    await TodoStore.assignTodoToUser(
+      todoId: todo3.id,
+      userId: alice.id,
+    ); // shared todo
+    await TodoStore.assignTodoToUser(todoId: todo4.id, userId: bob.id);
+    await TodoStore.assignTodoToUser(
+      todoId: todo4.id,
+      userId: charlie.id,
+    ); // shared todo
   }
 
-  // Show all users
+  // Show all users and their todos
   final allUsers = await UserStore.listUsers();
   print('All users (${allUsers.length}):');
   for (final user in allUsers) {
     print('  $user');
-    for (final todo in user.todos) {
+    final todos = await UserStore.getUserTodos(user.id);
+    for (final todo in todos) {
       print('    - $todo');
     }
+  }
+
+  // Show all todos and their assigned users
+  final allTodos = await TodoStore.listTodos();
+  print('\nAll todos (${allTodos.length}):');
+  for (final todo in allTodos) {
+    print('  $todo');
   }
 }

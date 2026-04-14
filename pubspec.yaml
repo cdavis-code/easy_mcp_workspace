@@ -1,4 +1,4 @@
-name: my_mcp_workspace
+name: easy_mcp_workspace
 publish_to: none
 environment:
   sdk: ^3.9.0
@@ -6,8 +6,8 @@ dev_dependencies:
   lints: ^5.0.0
   melos: ^7.5.1
 workspace:
-  - packages/mcp_annotations
-  - packages/mcp_generator
+  - packages/easy_mcp_annotations
+  - packages/easy_mcp_generator
   - example
 melos:
   scripts:
@@ -43,14 +43,14 @@ melos:
       melos exec --no-private -- dart pub publish --dry-run &&
       echo "All packages ready for publishing"
     publish:annotations: >
-      cd packages/mcp_annotations &&
+      cd packages/easy_mcp_annotations &&
       dart pub publish
     publish:generator: >
-      cd packages/mcp_generator &&
+      cd packages/easy_mcp_generator &&
       dart pub publish
     publish:all: >
       melos run publish:annotations &&
-      echo "mcp_annotations published. Update mcp_generator dependency to ^0.1.2 and run:" &&
+      echo "easy_mcp_annotations published. Update easy_mcp_generator dependency to ^0.1.2 and run:" &&
       echo "melos run publish:generator"
 
     # Pre-commit / CI

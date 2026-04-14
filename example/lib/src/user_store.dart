@@ -1,13 +1,19 @@
 // Persistent user store backed by a JSON file.
 import 'dart:convert';
 import 'dart:io';
-import 'package:mcp_annotations/mcp_annotations.dart';
+import 'package:easy_mcp_annotations/mcp_annotations.dart';
 import 'user.dart';
 import 'todo.dart';
+import 'todo_store.dart';
 
 class UserStore {
   static const _filePath = 'users.json';
   static List<User>? _cache;
+
+  /// Invalidates the cache to force reload from file.
+  static void invalidateCache() {
+    _cache = null;
+  }
 
   static Future<List<User>> _loadUsers() async {
     if (_cache != null) return _cache!;
@@ -50,18 +56,26 @@ class UserStore {
   static Future<User> createUser({
     required String name,
     required String email,
-    List<Todo>? todos,
   }) async {
     final users = await _loadUsers();
-    final user = User(
-      id: _nextId,
-      name: name,
-      email: email,
-      todos: todos ?? [],
-    );
+    final user = User(id: _nextId, name: name, email: email, todoIds: []);
     users.add(user);
     await _saveUsers(users);
     return user;
+  }
+
+  /// Gets all todos assigned to a user.
+  @Tool(description: 'Get all todos assigned to a user')
+  static Future<List<Todo>> getUserTodos(int userId) async {
+    final users = await _loadUsers();
+    try {
+      final user = users.firstWhere((u) => u.id == userId);
+      if (user.todoIds.isEmpty) return [];
+      final todos = await TodoStore.listTodos();
+      return todos.where((t) => user.todoIds.contains(t.id)).toList();
+    } catch (_) {
+      return [];
+    }
   }
 
   /// Gets a user by their ID.
@@ -82,6 +96,7 @@ class UserStore {
   }
 
   /// Deletes a user by their ID.
+  /// Also removes the user reference from all todos.
   @Tool(description: 'Delete a user')
   static Future<bool> deleteUser(int id) async {
     final users = await _loadUsers();
@@ -89,6 +104,24 @@ class UserStore {
     users.removeWhere((u) => u.id == id);
     if (users.length != initialLength) {
       await _saveUsers(users);
+
+      // Clean up userId references in all todos
+      final todos = await TodoStore.listTodos();
+      bool todosModified = false;
+      for (var i = 0; i < todos.length; i++) {
+        if (todos[i].userIds.contains(id)) {
+          todos[i] = todos[i].copyWith(
+            userIds: todos[i].userIds.where((userId) => userId != id).toList(),
+          );
+          todosModified = true;
+        }
+      }
+      if (todosModified) {
+        final file = File('todos.json');
+        final json = jsonEncode(todos.map((t) => t.toJson()).toList());
+        await file.writeAsString(json);
+      }
+
       return true;
     }
     return false;

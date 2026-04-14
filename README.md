@@ -10,8 +10,8 @@ Easy MCP allows you to expose Dart library functions as MCP tools using simple a
 
 | Package | Description |
 |---------|-------------|
-| `mcp_annotations` | Annotation definitions (`@mcp`, `@tool`) |
-| `mcp_generator` | Build runner generator that produces MCP server code |
+| `easy_mcp_annotations` | Annotation definitions (`@mcp`, `@tool`) |
+| `easy_mcp_generator` | Build runner generator that produces MCP server code |
 
 ## Quick Start
 
@@ -19,19 +19,19 @@ Easy MCP allows you to expose Dart library functions as MCP tools using simple a
 
 ```yaml
 dependencies:
-  mcp_annotations:
-    path: ../packages/mcp_annotations
+  easy_mcp_annotations:
+    path: ../packages/easy_mcp_annotations
 
 dev_dependencies:
   build_runner: any
-  mcp_generator:
-    path: ../packages/mcp_generator
+  easy_mcp_generator:
+    path: ../packages/easy_mcp_generator
 ```
 
 ### 2. Annotate Your Functions
 
 ```dart
-import 'package:mcp_annotations/mcp_annotations.dart';
+import 'package:easy_mcp_annotations/mcp_annotations.dart';
 
 @mcp(transport: McpTransport.stdio)
 @tool(description: 'Get user by ID')
