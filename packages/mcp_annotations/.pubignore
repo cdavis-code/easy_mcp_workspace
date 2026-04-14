@@ -1,0 +1,7 @@
+.dart_tool/
+.packages
+**/*.g.dart
+**/*.gr.dart
+**/*.freezed.dart
+**/*.chopper.dart
+test/

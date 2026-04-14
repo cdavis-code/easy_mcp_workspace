@@ -74,57 +74,54 @@ The server uses `dart_mcp` with stdio transport. It communicates via JSON-RPC 2.
 
 ### Testing the Server
 
-The server uses `dart_mcp` with stdio transport. Each invocation starts a fresh server instance.
+Use the [MCP Inspector](https://github.com/modelcontextprotocol/inspector) — the official testing tool for MCP servers — to test all tools via CLI.
 
-**Initialize the server:**
+**Prerequisites:** Node.js 22.7.5+
 
-```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' \
-  | dart run example/lib/src/user.mcp.dart
-```
-
-Expected response:
-```json
-{"jsonrpc":"2.0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"mcp-server","version":"1.0.0"},"instructions":"Auto-generated MCP server"},"id":1}
-```
-
-**Initialize and list tools:**
+**List available tools**
 
 ```bash
-printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}\n{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}\n' \
-  | dart run example/lib/src/user.mcp.dart
+npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/list
 ```
 
-**Test all tools (initialize, list tools, and call tools):**
+**Call a tool**
 
 ```bash
-dart run example/test_mcp.dart
+# Call listUsers (no parameters)
+npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name listUsers
+
+# Call createUser with parameters
+npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name createUser --tool-arg 'name=Test User' --tool-arg 'email=test@example.com'
+
+# Call getUser with ID
+npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name getUser --tool-arg 'id=1'
+
+# Call searchUsers with query
+npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name searchUsers --tool-arg 'query=Alice'
+
+# Call deleteUser
+npx @modelcontextprotocol/inspector --cli dart run example/lib/src/user.mcp.dart --method tools/call --tool-name deleteUser --tool-arg 'id=1'
 ```
 
-This runs a full test session that verifies:
-- Server initialization
-- Tool listing (5 tools: `createUser`, `getUser`, `listUsers`, `deleteUser`, `searchUsers`)
-- `listUsers` - returns all users as JSON
-- `createUser` - creates a new user and returns it as JSON
-- `searchUsers` - searches and returns matching users as JSON
+**Available tools:**
 
-Example tool call response (`listUsers`):
-```json
-{
-  "jsonrpc": "2.0",
-  "result": {
-    "content": [
-      {
-        "text": "[{\"id\":1,\"name\":\"Alice Smith\",\"email\":\"alice@example.com\"},{\"id\":2,\"name\":\"Bob Jones\",\"email\":\"bob@example.com\"},{\"id\":3,\"name\":\"Charlie Brown\",\"email\":\"charlie@example.com\"}]",
-        "type": "text"
-      }
-    ]
-  },
-  "id": 3
-}
+| Tool | Description | Parameters |
+|------|-------------|------------|
+| `createUser` | Create a new user | `name` (String), `email` (String) |
+| `getUser` | Get user by ID | `id` (int) |
+| `listUsers` | List all users | none |
+| `deleteUser` | Delete a user | `id` (int) |
+| `searchUsers` | Search users by query | `query` (String) |
+
+**Alternative: Web UI mode**
+
+For interactive browser-based testing, run without the `--cli` flag:
+
+```bash
+npx @modelcontextprotocol/inspector dart run example/lib/src/user.mcp.dart
 ```
 
-> **Note:** Tool calls require the server to stay alive while async handlers complete. Simple pipe commands (`echo | dart run`) don't work for tool calls because stdin closes before the response is written. Use `test_mcp.dart` or an MCP client for full testing.
+Then open `http://localhost:6274` in your browser.
 
 ## Project Structure
 
@@ -145,11 +142,18 @@ example/
 The generated `.mcp.dart` file creates a complete MCP server using `dart_mcp`:
 
 ```dart
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io' as io;
+
 import 'package:dart_mcp/server.dart';
 import 'package:dart_mcp/stdio.dart';
 
-void main() {
-  MCPServerWithTools(stdioChannel(input: io.stdin, output: io.stdout));
+Future<void> main() async {
+  final server = MCPServerWithTools(
+    stdioChannel(input: io.stdin, output: io.stdout),
+  );
+  await server.done;
 }
 
 base class MCPServerWithTools extends MCPServer with ToolsSupport {

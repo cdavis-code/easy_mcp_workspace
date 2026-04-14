@@ -6,11 +6,25 @@ import 'package:mcp_generator/builder/schema_builder.dart';
 class StdioTemplate {
   static String generate(
     List<Map<String, dynamic>> tools,
-    String libraryName,
-    String inputPath,
   ) {
-    final importPath =
-        'package:mcp_$libraryName${inputPath.replaceAll('lib', '')}';
+    // Collect unique imports for custom List inner types
+    final listInnerImports = _collectListInnerImports(tools);
+    final listInnerImportStatements = listInnerImports
+        .map((uri) => "import '$uri';")
+        .join('\n');
+
+    // Collect unique per-tool source imports with aliases
+    final sourceImports = <String, String>{};
+    for (final tool in tools) {
+      final sourceImport = tool['sourceImport'] as String?;
+      final sourceAlias = tool['sourceAlias'] as String?;
+      if (sourceImport != null && sourceAlias != null) {
+        sourceImports[sourceImport] = sourceAlias;
+      }
+    }
+    final sourceImportStatements = sourceImports.entries
+        .map((e) => "import '${e.key}' as ${e.value};")
+        .join('\n');
 
     final toolRegistrations = tools
         .map((t) {
@@ -38,36 +52,68 @@ class StdioTemplate {
               .map((p) {
                 final paramName = p['name'] as String;
                 final paramType = p['type'] as String;
-                return "    final $paramName = request.arguments!['$paramName'] as ${_dartType(paramType)};";
+                final isOptional = p['isOptional'] == true;
+                final dartType = _dartType(paramType);
+                if (isOptional) {
+                  final nullableType = dartType.endsWith('?')
+                      ? dartType
+                      : '$dartType?';
+                  return "    final $paramName = request.arguments?['$paramName'] as $nullableType;";
+                }
+                return "    final $paramName = request.arguments!['$paramName'] as $dartType;";
+              })
+              .join('\n');
+
+          // Generate conversion code for List parameters with custom inner types
+          final paramConversions = params
+              .where((p) => _needsListConversion(p['type'] as String))
+              .map((p) {
+                final paramName = p['name'] as String;
+                final paramType = p['type'] as String;
+                final innerType = _extractListInnerType(paramType);
+                final isOptional = p['isOptional'] == true;
+                if (isOptional) {
+                  return '    final ${paramName}Converted = $paramName?.map((e) => $innerType.fromJson(e as Map<String, dynamic>)).toList();';
+                }
+                return '    final ${paramName}Converted = $paramName.map((e) => $innerType.fromJson(e as Map<String, dynamic>)).toList();';
               })
               .join('\n');
 
           final isAsync = t['isAsync'] == true;
           final className = t['className'] as String?;
           final isStatic = t['isStatic'] == true;
+          final sourceAlias = t['sourceAlias'] as String? ?? 'lib';
 
           String call;
           if (className != null && isStatic) {
             call = isAsync
-                ? 'await lib.$className.$name(${_callArgs(params)})'
-                : 'lib.$className.$name(${_callArgs(params)})';
+                ? 'await $sourceAlias.$className.$name(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$className.$name(${_callArgsWithConversion(params)})';
           } else if (className != null) {
             call = isAsync
-                ? 'await lib.$className().$name(${_callArgs(params)})'
-                : 'lib.$className().$name(${_callArgs(params)})';
+                ? 'await $sourceAlias.$className().$name(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$className().$name(${_callArgsWithConversion(params)})';
           } else {
             call = isAsync
-                ? 'await lib.$name(${_callArgs(params)})'
-                : 'lib.$name(${_callArgs(params)})';
+                ? 'await $sourceAlias.$name(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$name(${_callArgsWithConversion(params)})';
           }
 
           return '''
   FutureOr<CallToolResult> _$name(CallToolRequest request) async {
+    try {
 $paramExtractions
-    final result = $call;
-    return CallToolResult(
-      content: [TextContent(text: _serializeResult(result))],
-    );
+$paramConversions
+      final result = $call;
+      return CallToolResult(
+        content: [TextContent(text: _serializeResult(result))],
+      );
+    } catch (e) {
+      return CallToolResult(
+        content: [TextContent(text: e.toString())],
+        isError: true,
+      );
+    }
   }''';
         })
         .join('\n');
@@ -83,10 +129,14 @@ import 'dart:io' as io;
 import 'package:dart_mcp/server.dart';
 import 'package:dart_mcp/stdio.dart';
 
-import '$importPath' as lib;
+$listInnerImportStatements
+$sourceImportStatements
 
-void main() {
-  MCPServerWithTools(stdioChannel(input: io.stdin, output: io.stdout));
+Future<void> main() async {
+  final server = MCPServerWithTools(
+    stdioChannel(input: io.stdin, output: io.stdout),
+  );
+  await server.done;
 }
 
 base class MCPServerWithTools extends MCPServer with ToolsSupport {
@@ -126,27 +176,94 @@ $toolHandlers
 ''';
   }
 
-  static String _callArgs(List<Map<String, dynamic>> params) {
+  /// Generates call arguments, using converted variable names for List parameters with custom inner types.
+  static String _callArgsWithConversion(List<Map<String, dynamic>> params) {
     return params
         .map((p) {
           final name = p['name'] as String;
           final isNamed = p['isNamed'] == true;
-          return isNamed ? '$name: $name' : name;
+          final paramType = p['type'] as String;
+          final argName = _needsListConversion(paramType)
+              ? '${name}Converted'
+              : name;
+          return isNamed ? '$name: $argName' : argName;
         })
         .join(', ');
   }
 
+  /// Collects unique import URIs for custom List inner types from all tools.
+  static Set<String> _collectListInnerImports(
+    List<Map<String, dynamic>> tools,
+  ) {
+    final imports = <String>{};
+    for (final tool in tools) {
+      final params = tool['parameters'] as List<Map<String, dynamic>>? ?? [];
+      for (final param in params) {
+        final importUri = param['listInnerTypeImport'] as String?;
+        if (importUri != null) {
+          imports.add(importUri);
+        }
+      }
+    }
+    return imports;
+  }
+
   static String _dartType(String type) {
-    if (type.startsWith('List<')) return type;
-    switch (type) {
+    // Strip nullable suffix for matching
+    final baseType = type.endsWith('?')
+        ? type.substring(0, type.length - 1)
+        : type;
+    final isNullable = type.endsWith('?');
+    final suffix = isNullable ? '?' : '';
+
+    if (baseType.startsWith('List<')) {
+      final inner = baseType.substring(5, baseType.length - 1);
+      if (!const [
+        'String',
+        'int',
+        'double',
+        'bool',
+        'num',
+        'dynamic',
+      ].contains(inner)) {
+        return 'List<dynamic>$suffix';
+      }
+      return '$baseType$suffix';
+    }
+    switch (baseType) {
       case 'String':
       case 'int':
       case 'double':
       case 'bool':
-        return type;
+        return '$baseType$suffix';
       default:
         return 'dynamic';
     }
+  }
+
+  /// Checks if a type is a List with a non-primitive inner type that needs conversion.
+  static bool _needsListConversion(String type) {
+    final baseType = type.endsWith('?')
+        ? type.substring(0, type.length - 1)
+        : type;
+    if (!baseType.startsWith('List<')) return false;
+    final inner = baseType.substring(5, baseType.length - 1);
+    return !const [
+      'String',
+      'int',
+      'double',
+      'bool',
+      'num',
+      'dynamic',
+    ].contains(inner);
+  }
+
+  /// Extracts the inner type from a `List<T>` type string.
+  static String _extractListInnerType(String type) {
+    final baseType = type.endsWith('?')
+        ? type.substring(0, type.length - 1)
+        : type;
+    return baseType.substring(5, baseType.length - 1);
   }
 }
 
@@ -155,11 +272,25 @@ class HttpTemplate {
   static String generate(
     List<Map<String, dynamic>> tools,
     int port,
-    String libraryName,
-    String inputPath,
   ) {
-    final importPath =
-        'package:mcp_$libraryName${inputPath.replaceAll('lib', '')}';
+    // Collect unique imports for custom List inner types
+    final listInnerImports = _collectListInnerImports(tools);
+    final listInnerImportStatements = listInnerImports
+        .map((uri) => "import '$uri';")
+        .join('\n');
+
+    // Collect unique per-tool source imports with aliases
+    final sourceImports = <String, String>{};
+    for (final tool in tools) {
+      final sourceImport = tool['sourceImport'] as String?;
+      final sourceAlias = tool['sourceAlias'] as String?;
+      if (sourceImport != null && sourceAlias != null) {
+        sourceImports[sourceImport] = sourceAlias;
+      }
+    }
+    final sourceImportStatements = sourceImports.entries
+        .map((e) => "import '${e.key}' as ${e.value};")
+        .join('\n');
 
     final toolRegistrations = tools
         .map((t) {
@@ -187,36 +318,68 @@ class HttpTemplate {
               .map((p) {
                 final paramName = p['name'] as String;
                 final paramType = p['type'] as String;
-                return "    final $paramName = request.arguments!['$paramName'] as ${_dartType(paramType)};";
+                final isOptional = p['isOptional'] == true;
+                final dartType = _dartType(paramType);
+                if (isOptional) {
+                  final nullableType = dartType.endsWith('?')
+                      ? dartType
+                      : '$dartType?';
+                  return "    final $paramName = request.arguments?['$paramName'] as $nullableType;";
+                }
+                return "    final $paramName = request.arguments!['$paramName'] as $dartType;";
+              })
+              .join('\n');
+
+          // Generate conversion code for List parameters with custom inner types
+          final paramConversions = params
+              .where((p) => _needsListConversion(p['type'] as String))
+              .map((p) {
+                final paramName = p['name'] as String;
+                final paramType = p['type'] as String;
+                final innerType = _extractListInnerType(paramType);
+                final isOptional = p['isOptional'] == true;
+                if (isOptional) {
+                  return '    final ${paramName}Converted = $paramName?.map((e) => $innerType.fromJson(e as Map<String, dynamic>)).toList();';
+                }
+                return '    final ${paramName}Converted = $paramName.map((e) => $innerType.fromJson(e as Map<String, dynamic>)).toList();';
               })
               .join('\n');
 
           final isAsync = t['isAsync'] == true;
           final className = t['className'] as String?;
           final isStatic = t['isStatic'] == true;
+          final sourceAlias = t['sourceAlias'] as String? ?? 'lib';
 
           String call;
           if (className != null && isStatic) {
             call = isAsync
-                ? 'await lib.$className.$name(${_callArgs(params)})'
-                : 'lib.$className.$name(${_callArgs(params)})';
+                ? 'await $sourceAlias.$className.$name(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$className.$name(${_callArgsWithConversion(params)})';
           } else if (className != null) {
             call = isAsync
-                ? 'await lib.$className().$name(${_callArgs(params)})'
-                : 'lib.$className().$name(${_callArgs(params)})';
+                ? 'await $sourceAlias.$className().$name(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$className().$name(${_callArgsWithConversion(params)})';
           } else {
             call = isAsync
-                ? 'await lib.$name(${_callArgs(params)})'
-                : 'lib.$name(${_callArgs(params)})';
+                ? 'await $sourceAlias.$name(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$name(${_callArgsWithConversion(params)})';
           }
 
           return '''
   FutureOr<CallToolResult> _$name(CallToolRequest request) async {
+    try {
 $paramExtractions
-    final result = $call;
-    return CallToolResult(
-      content: [TextContent(text: _serializeResult(result))],
-    );
+$paramConversions
+      final result = $call;
+      return CallToolResult(
+        content: [TextContent(text: _serializeResult(result))],
+      );
+    } catch (e) {
+      return CallToolResult(
+        content: [TextContent(text: e.toString())],
+        isError: true,
+      );
+    }
   }''';
         })
         .join('\n');
@@ -230,12 +393,64 @@ import 'dart:convert';
 import 'dart:io' as io;
 
 import 'package:dart_mcp/server.dart';
-import 'package:dart_mcp/stdio.dart';
+import 'package:shelf/shelf.dart' as shelf;
+import 'package:shelf/shelf_io.dart' as shelf_io;
+import 'package:stream_channel/stream_channel.dart';
 
-import '$importPath' as lib;
+$listInnerImportStatements
+$sourceImportStatements
 
-void main() {
-  MCPServerWithTools(stdioChannel(input: io.stdin, output: io.stdout));
+Future<void> main() async {
+  // Create stream controllers for bidirectional communication
+  final clientToServer = StreamController<String>();
+  final serverToClient = StreamController<String>.broadcast();
+
+  // Create the StreamChannel that MCPServer expects
+  final channel = StreamChannel<String>(
+    clientToServer.stream,
+    serverToClient.sink,
+  );
+
+  final server = MCPServerWithTools(channel);
+
+  // Buffer responses from the MCP server using a queue of completers
+  final responseQueue = <Completer<String>>[];
+  serverToClient.stream.listen((response) {
+    if (responseQueue.isNotEmpty) {
+      responseQueue.removeAt(0).complete(response);
+    }
+  });
+
+  shelf.Response handleRequest(shelf.Request request) async {
+    if (request.method != 'POST') {
+      return shelf.Response(405, body: 'Method not allowed');
+    }
+
+    final body = await request.readAsString();
+    final completer = Completer<String>();
+    responseQueue.add(completer);
+    clientToServer.add(body);
+
+    final response = await completer.future;
+    return shelf.Response.ok(
+      response,
+      headers: {'Content-Type': 'application/json'},
+    );
+  }
+
+  final httpServer = await shelf_io.serve(
+    handleRequest,
+    io.InternetAddress.loopbackIPv4,
+    $port,
+  );
+
+  print('MCP HTTP server listening on port \${httpServer.port}');
+
+  // Wait for server to complete and then clean up
+  await server.done;
+  await httpServer.close();
+  await clientToServer.close();
+  await serverToClient.close();
 }
 
 base class MCPServerWithTools extends MCPServer with ToolsSupport {
@@ -275,26 +490,93 @@ $toolHandlers
 ''';
   }
 
-  static String _callArgs(List<Map<String, dynamic>> params) {
+  /// Generates call arguments, using converted variable names for List parameters with custom inner types.
+  static String _callArgsWithConversion(List<Map<String, dynamic>> params) {
     return params
         .map((p) {
           final name = p['name'] as String;
           final isNamed = p['isNamed'] == true;
-          return isNamed ? '$name: $name' : name;
+          final paramType = p['type'] as String;
+          final argName = _needsListConversion(paramType)
+              ? '${name}Converted'
+              : name;
+          return isNamed ? '$name: $argName' : argName;
         })
         .join(', ');
   }
 
+  /// Collects unique import URIs for custom List inner types from all tools.
+  static Set<String> _collectListInnerImports(
+    List<Map<String, dynamic>> tools,
+  ) {
+    final imports = <String>{};
+    for (final tool in tools) {
+      final params = tool['parameters'] as List<Map<String, dynamic>>? ?? [];
+      for (final param in params) {
+        final importUri = param['listInnerTypeImport'] as String?;
+        if (importUri != null) {
+          imports.add(importUri);
+        }
+      }
+    }
+    return imports;
+  }
+
   static String _dartType(String type) {
-    if (type.startsWith('List<')) return type;
-    switch (type) {
+    // Strip nullable suffix for matching
+    final baseType = type.endsWith('?')
+        ? type.substring(0, type.length - 1)
+        : type;
+    final isNullable = type.endsWith('?');
+    final suffix = isNullable ? '?' : '';
+
+    if (baseType.startsWith('List<')) {
+      final inner = baseType.substring(5, baseType.length - 1);
+      if (!const [
+        'String',
+        'int',
+        'double',
+        'bool',
+        'num',
+        'dynamic',
+      ].contains(inner)) {
+        return 'List<dynamic>$suffix';
+      }
+      return '$baseType$suffix';
+    }
+    switch (baseType) {
       case 'String':
       case 'int':
       case 'double':
       case 'bool':
-        return type;
+        return '$baseType$suffix';
       default:
         return 'dynamic';
     }
+  }
+
+  /// Checks if a type is a List with a non-primitive inner type that needs conversion.
+  static bool _needsListConversion(String type) {
+    final baseType = type.endsWith('?')
+        ? type.substring(0, type.length - 1)
+        : type;
+    if (!baseType.startsWith('List<')) return false;
+    final inner = baseType.substring(5, baseType.length - 1);
+    return !const [
+      'String',
+      'int',
+      'double',
+      'bool',
+      'num',
+      'dynamic',
+    ].contains(inner);
+  }
+
+  /// Extracts the inner type from a `List<T>` type string.
+  static String _extractListInnerType(String type) {
+    final baseType = type.endsWith('?')
+        ? type.substring(0, type.length - 1)
+        : type;
+    return baseType.substring(5, baseType.length - 1);
   }
 }
