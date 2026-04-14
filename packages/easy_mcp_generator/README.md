@@ -15,7 +15,7 @@ Add this to your package's `pubspec.yaml`:
 ```yaml
 dependencies:
   easy_mcp_generator: ^0.1.0
-  easy_mcp_annotations: ^0.2.0
+  easy_mcp_annotations: ^0.2.1
 
 dev_dependencies:
   build_runner: ^2.4.0
