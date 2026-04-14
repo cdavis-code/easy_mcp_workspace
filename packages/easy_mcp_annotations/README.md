@@ -1,5 +1,9 @@
 # easy_mcp_annotations
 
+<p align="center">
+  <img src="../../logo-icon.svg" width="80" height="80" alt="easy_mcp logo">
+</p>
+
 Dart annotations for exposing library methods as MCP tools.
 
 Provides the `@mcp` and `@tool` annotations used to define Model Context Protocol (MCP) servers and tools using Dart code that can be processed by the `easy_mcp_generator` build_runner package.

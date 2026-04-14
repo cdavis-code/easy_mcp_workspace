@@ -1,5 +1,9 @@
 # easy_mcp_generator
 
+<p align="center">
+  <img src="../../logo-icon.svg" width="80" height="80" alt="easy_mcp logo">
+</p>
+
 Build Runner generator that creates MCP server code from @tool annotations.
 
 Processes Dart code annotated with `@mcp` and `@tool` from the `easy_mcp_annotations` package to generate complete MCP server implementations.

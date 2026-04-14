@@ -1,6 +1,10 @@
-# Easy MCP
+<p align="center">
+  <img src="logo-banner.svg" width="600" height="120" alt="easy_mcp">
+</p>
 
-A Dart code generator that transforms annotated functions into Model Context Protocol (MCP) servers.
+<p align="center">
+  <strong>A Dart code generator that transforms annotated functions into Model Context Protocol (MCP) servers.</strong>
+</p>
 
 ## Overview
 

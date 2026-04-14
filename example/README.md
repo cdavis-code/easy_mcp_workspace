@@ -1,5 +1,9 @@
 # MCP Example
 
+<p align="center">
+  <img src="../logo-icon.svg" width="80" height="80" alt="easy_mcp logo">
+</p>
+
 Example demonstrating how to use `easy_mcp_annotations` and `easy_mcp_generator`. This example showcases a realistic many-to-many domain model where **Users** and **Todos** have bidirectional relationships — a todo can be assigned to multiple users, and a user can have multiple todos.
 
 ## Prerequisites
