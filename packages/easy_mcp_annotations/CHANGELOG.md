@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-04-14
+
 ### Added
 - Added `port` parameter to `@Mcp` annotation for HTTP transport configuration
 - Added `address` parameter to `@Mcp` annotation for HTTP bind address configuration
