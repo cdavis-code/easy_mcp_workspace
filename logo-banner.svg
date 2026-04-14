@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 120" width="600" height="120">
+  <!-- Background -->
+  <rect x="0" y="0" width="600" height="120" fill="#0175C2" rx="12"/>
+  
+  <!-- Logo Icon -->
+  <g transform="translate(30, 20)">
+    <circle cx="40" cy="40" r="35" fill="white"/>
+    <circle cx="40" cy="40" r="30" fill="#0175C2"/>
+    <circle cx="40" cy="40" r="28" fill="none" stroke="#13B9FD" stroke-width="2"/>
+    
+    <!-- Code brackets -->
+    <g fill="white">
+      <path d="M25 28 L20 40 L25 52 L30 49 L26 40 L30 31 Z"/>
+      <path d="M55 28 L60 40 L55 52 L50 49 L54 40 L50 31 Z"/>
+    </g>
+    
+    <!-- MCP text -->
+    <text x="40" y="44" font-family="Arial, sans-serif" font-size="12" font-weight="bold" 
+          fill="white" text-anchor="middle">MCP</text>
+  </g>
+  
+  <!-- Project Name -->
+  <text x="120" y="55" font-family="Arial, sans-serif" font-size="36" font-weight="bold" 
+        fill="white">easy_mcp</text>
+  
+  <!-- Tagline -->
+  <text x="120" y="80" font-family="Arial, sans-serif" font-size="16" 
+        fill="#13B9FD">Dart MCP Server Generation Made Easy</text>
+  
+  <!-- Decorative elements -->
+  <circle cx="550" cy="30" r="4" fill="#13B9FD" opacity="0.6"/>
+  <circle cx="570" cy="50" r="3" fill="#13B9FD" opacity="0.4"/>
+  <circle cx="560" cy="80" r="5" fill="#13B9FD" opacity="0.5"/>
+</svg>

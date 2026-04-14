@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="90" fill="#0175C2"/>
+  
+  <!-- Inner decorative ring -->
+  <circle cx="100" cy="100" r="80" fill="none" stroke="#13B9FD" stroke-width="3"/>
+  
+  <!-- Code brackets representing Dart -->
+  <g fill="white">
+    <!-- Left bracket -->
+    <path d="M55 70 L45 100 L55 130 L65 125 L57 100 L65 75 Z"/>
+    <!-- Right bracket -->
+    <path d="M145 70 L155 100 L145 130 L135 125 L143 100 L135 75 Z"/>
+  </g>
+  
+  <!-- MCP letters in center -->
+  <text x="100" y="108" font-family="Arial, sans-serif" font-size="36" font-weight="bold" 
+        fill="white" text-anchor="middle">MCP</text>
+  
+  <!-- Tool/gear icon at bottom representing code generation -->
+  <g transform="translate(100, 155)">
+    <circle cx="0" cy="0" r="12" fill="#13B9FD"/>
+    <circle cx="0" cy="0" r="6" fill="#0175C2"/>
+    <!-- Gear teeth -->
+    <rect x="-2" y="-16" width="4" height="6" fill="#13B9FD"/>
+    <rect x="-2" y="10" width="4" height="6" fill="#13B9FD"/>
+    <rect x="-16" y="-2" width="6" height="4" fill="#13B9FD"/>
+    <rect x="10" y="-2" width="6" height="4" fill="#13B9FD"/>
+  </g>
+  
+  <!-- Connection dots representing protocol/network -->
+  <circle cx="100" cy="45" r="4" fill="#13B9FD"/>
+  <circle cx="70" cy="55" r="3" fill="#13B9FD" opacity="0.6"/>
+  <circle cx="130" cy="55" r="3" fill="#13B9FD" opacity="0.6"/>
+</svg>
