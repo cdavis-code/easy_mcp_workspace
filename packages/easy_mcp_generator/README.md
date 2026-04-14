@@ -14,8 +14,8 @@ Add this to your package's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  easy_mcp_generator: ^0.2.1
-  easy_mcp_annotations: ^0.2.1
+  easy_mcp_generator: ^0.2.2
+  easy_mcp_annotations: ^0.2.2
 
 dev_dependencies:
   build_runner: ^2.4.0
@@ -136,7 +136,7 @@ class MyServer { ... }
 
 ## Example
 
-See the [example](../../example) directory in the workspace root for a complete working example that demonstrates usage of both packages together.
+See the [example](https://github.com/cdavis-code/easy_mcp_workspace/tree/main/example) directory in the workspace root for a complete working example that demonstrates usage of both packages together.
 
 ## Generated Server Capabilities
 

@@ -14,7 +14,7 @@ Add this to your package's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  easy_mcp_annotations: ^0.2.1
+  easy_mcp_annotations: ^0.2.2
 ```
 
 ## Usage
@@ -116,7 +116,7 @@ Future<User> createUser({
 | `sensitive` | `bool` | `false` | Whether this parameter contains sensitive data |
 | `enumValues` | `List<Object?>?` | `null` | List of allowed values |
 
-See the [example](../../example) directory in the workspace root for a complete working example that demonstrates usage of both packages together.
+See the [example](https://github.com/cdavis-code/easy_mcp_workspace/tree/main/example) directory in the workspace root for a complete working example that demonstrates usage of both packages together.
 
 ## Features
 
