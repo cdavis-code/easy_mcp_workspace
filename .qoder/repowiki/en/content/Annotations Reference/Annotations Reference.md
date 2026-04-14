@@ -13,7 +13,18 @@
 - [todo.dart](file://example/lib/src/todo.dart)
 - [user.dart](file://example/lib/src/user.dart)
 - [mcp_annotation_test.dart](file://packages/easy_mcp_annotations/test/mcp_annotation_test.dart)
+- [README.md](file://packages/easy_mcp_annotations/README.md)
+- [pubspec.yaml](file://packages/easy_mcp_annotations/pubspec.yaml)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added comprehensive @Parameter annotation documentation with all supported metadata fields
+- Updated version references to 0.2.0 across all documentation
+- Enhanced parameter reference with complete data types, validation features, and practical examples
+- Added detailed coverage of parameter validation features including minimum/maximum values, pattern matching, and enum constraints
+- Expanded practical examples showing @Parameter usage in real-world scenarios
+- Updated architecture diagrams to reflect parameter metadata processing pipeline
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -27,35 +38,38 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document provides a comprehensive reference for Easy MCP’s annotation system. It covers:
-- The @mcp annotation for transport configuration and code generation triggers
-- The @tool annotation for tool metadata and schema generation
+This document provides a comprehensive reference for Easy MCP's annotation system. It covers:
+- The @Mcp annotation for transport configuration and code generation triggers
+- The @Tool annotation for tool metadata and schema generation
+- The @Parameter annotation for rich parameter metadata and validation
 - Complete parameter reference with types, defaults, and validation rules
 - Practical examples of annotation combinations and their effects
 - Annotation inheritance and precedence rules
 - Advanced usage patterns, best practices, and common mistakes
 - How annotations integrate with the code generation pipeline and affect schema generation
 
+**Updated** Version 0.2.0 introduces comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation and validation capabilities.
+
 ## Project Structure
 The annotation system spans two packages:
-- easy_mcp_annotations: Defines the @Mcp and @Tool annotations and their parameters
+- easy_mcp_annotations: Defines the @Mcp, @Tool, and @Parameter annotations and their parameters
 - easy_mcp_generator: Processes annotations and generates MCP-compatible servers and optional JSON metadata
 
 ```mermaid
 graph TB
 subgraph "Annotations"
-A["mcp_annotations.dart<br/>Defines @Mcp and @Tool"]
+A["mcp_annotations.dart<br/>Defines @Mcp, @Tool, @Parameter"]
 end
 subgraph "Generator"
 B["mcp_generator.dart<br/>Exports builder"]
-C["mcp_builder.dart<br/>AST parsing, tool extraction,<br/>transport selection, JSON metadata"]
+C["mcp_builder.dart<br/>AST parsing, tool extraction,<br/>parameter metadata extraction,<br/>transport selection, JSON metadata"]
 D["templates.dart<br/>Stdio and HTTP server templates"]
 E["schema_builder.dart<br/>Dart type to JSON Schema mapping"]
 end
 subgraph "Example"
 F["example.dart<br/>@Mcp(transport: http) on main()"]
-G["todo_store.dart<br/>@Tool(...) on static methods"]
-H["user_store.dart<br/>@Tool(...) on static methods"]
+G["user_store.dart<br/>@Tool(...) with @Parameter annotations"]
+H["todo_store.dart<br/>@Tool(...) on static methods"]
 end
 A --> B
 B --> C
@@ -73,8 +87,8 @@ H --> C
 - [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 - [schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart)
 - [example.dart](file://example/bin/example.dart)
-- [todo_store.dart](file://example/lib/src/todo_store.dart)
 - [user_store.dart](file://example/lib/src/user_store.dart)
+- [todo_store.dart](file://example/lib/src/todo_store.dart)
 
 **Section sources**
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
@@ -86,10 +100,13 @@ H --> C
   - Parameters:
     - transport: enum McpTransport (default stdio)
     - generateJson: bool (optional; default false)
+    - port: int (HTTP transport only; default 3000)
+    - address: String (HTTP transport only; default '127.0.0.1')
   - Behavior:
     - Triggers code generation when present at library or element level
     - Controls whether HTTP or stdio server is generated
     - Controls optional .mcp.json metadata emission
+    - Configures HTTP server binding and port for HTTP transport
 
 - @Tool (tool metadata)
   - Purpose: Marks a function or method as an MCP tool and supplies metadata
@@ -101,33 +118,52 @@ H --> C
     - Extracts tool description from annotation or doc comment
     - Participates in automatic schema generation via parameter introspection
 
+- @Parameter (rich parameter metadata)
+  - Purpose: Provides detailed metadata and validation for individual tool parameters
+  - Parameters:
+    - title: string? (human-readable parameter label)
+    - description: string? (detailed parameter description)
+    - example: Object? (example value for guidance)
+    - minimum: num? (minimum value for numeric types)
+    - maximum: num? (maximum value for numeric types)
+    - pattern: string? (regex pattern for string validation)
+    - sensitive: bool (whether parameter contains sensitive data)
+    - enumValues: List<Object?>? (allowed values for enum-like parameters)
+  - Behavior:
+    - Enhances parameter presentation in MCP clients
+    - Enables client-side validation and input assistance
+    - Supports sensitive data masking in client UIs
+
 **Section sources**
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
 ## Architecture Overview
-The annotation-driven pipeline:
+The annotation-driven pipeline now includes comprehensive parameter metadata processing:
 1. Annotations are parsed from source using analyzer and source_gen
-2. Tools are discovered across the library and its package-local imports
+2. Tools and parameter metadata are discovered across the library and its package-local imports
 3. Transport is determined from @Mcp on library or elements
-4. Templates generate either stdio or HTTP server code
-5. Optional JSON metadata is produced when requested
+4. Templates generate either stdio or HTTP server code with enhanced parameter metadata
+5. Optional JSON metadata is produced when requested, including parameter validation rules
 
 ```mermaid
 sequenceDiagram
 participant Dev as "Developer"
 participant Gen as "McpBuilder"
 participant Lib as "Library AST"
+participant ParamMeta as "Parameter Metadata Extractor"
 participant Tmpl as "Templates"
 participant Out as "Generated Artifacts"
 Dev->>Gen : "build_runner runs"
-Gen->>Lib : "Resolve library and scan for @Mcp/@Tool"
-Lib-->>Gen : "Tool definitions + metadata"
+Gen->>Lib : "Resolve library and scan for @Mcp/@Tool/@Parameter"
+Lib-->>Gen : "Tool definitions + parameter metadata"
+Gen->>ParamMeta : "Extract @Parameter annotations"
+ParamMeta-->>Gen : "Rich parameter metadata"
 Gen->>Gen : "Select transport (HTTP vs stdio)"
-Gen->>Tmpl : "Render server code"
-Tmpl-->>Out : ".mcp.dart (server)"
+Gen->>Tmpl : "Render server code with parameter metadata"
+Tmpl-->>Out : ".mcp.dart (server with enhanced metadata)"
 Gen->>Gen : "Check generateJson flag"
-Gen-->>Out : ".mcp.json (metadata)"
+Gen-->>Out : ".mcp.json (metadata with validation rules)"
 ```
 
 **Diagram sources**
@@ -146,10 +182,14 @@ Gen-->>Out : ".mcp.json (metadata)"
 - Parameters
   - transport: McpTransport (named, default stdio)
   - generateJson: bool (named, default false)
+  - port: int (named, default 3000, HTTP transport only)
+  - address: String (named, default '127.0.0.1', HTTP transport only)
 
 - Validation and defaults
   - If transport is omitted, defaults to stdio
   - If generateJson is omitted, defaults to false
+  - If port is omitted for HTTP transport, defaults to 3000
+  - If address is omitted for HTTP transport, defaults to '127.0.0.1'
 
 - Precedence and inheritance
   - The generator scans library units and elements for @Mcp
@@ -160,6 +200,7 @@ Gen-->>Out : ".mcp.json (metadata)"
   - transport=http → HTTP server template is used
   - transport=stdio → stdio server template is used
   - generateJson=true → emits .mcp.json metadata alongside .mcp.dart
+  - HTTP transport configuration affects server binding and port
 
 **Section sources**
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
@@ -186,22 +227,66 @@ Gen-->>Out : ".mcp.json (metadata)"
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
+### @Parameter Annotation Reference
+**Updated** The @Parameter annotation provides comprehensive metadata and validation capabilities for MCP tool parameters.
+
+- Parameters
+  - title: string? (human-readable parameter label, defaults to parameter name)
+  - description: string? (detailed parameter description)
+  - example: Object? (example value for guidance, supports string, int, double, bool)
+  - minimum: num? (minimum value for numeric parameters)
+  - maximum: num? (maximum value for numeric parameters)
+  - pattern: string? (regex pattern for string validation)
+  - sensitive: bool (default false, whether parameter contains sensitive data)
+  - enumValues: List<Object?>? (allowed values for enum-like parameters)
+
+- Data type handling
+  - example supports multiple types: String, int, double, bool
+  - minimum/maximum accept both int and double values
+  - enumValues supports mixed-type lists (String, int, double, bool)
+
+- Validation features
+  - Numeric range validation using minimum/maximum
+  - String pattern validation using regex
+  - Enum constraint validation using enumValues
+  - Sensitive data marking for client-side masking
+
+- Client integration
+  - Titles and descriptions improve parameter presentation
+  - Examples guide users and assist LLMs
+  - Validation rules enable client-side input checking
+  - Sensitive flags enable secure parameter handling
+
+**Section sources**
+- [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
+- [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
+
 ### Parameter Extraction and Schema Generation
+**Updated** Enhanced parameter processing now includes comprehensive metadata extraction and validation rule generation.
+
 - Parameter introspection
   - Extracts parameter name, type, optionality, and whether it is named
   - Supports primitives, lists, maps, and custom classes
   - Handles nullable types and optional parameters
+
+- Parameter metadata extraction
+  - Extracts @Parameter annotations from formal parameters
+  - Processes title, description, example, minimum, maximum, pattern, sensitive, enumValues
+  - Validates and normalizes metadata values
+  - Supports mixed-type enum values and complex validation rules
 
 - JSON Schema mapping
   - Primitive types map to JSON Schema types
   - Lists map to arrays; inner types are recursively introspected
   - Custom classes map to objects with properties and required fields
   - DateTime maps to string with date-time format
+  - Parameter metadata enhances schema with titles, descriptions, and validation rules
 
 - Template integration
   - Generated handlers extract request arguments and cast to inferred Dart types
   - Optional parameters are handled with null-aware casting
   - List parameters with custom inner types are converted using fromJson
+  - Parameter metadata is embedded in generated code for client consumption
 
 **Section sources**
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
@@ -209,37 +294,47 @@ Gen-->>Out : ".mcp.json (metadata)"
 - [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 
 ### Practical Examples and Effects
-Note: The following examples describe effects without reproducing code content.
+**Updated** Examples now demonstrate comprehensive @Parameter usage patterns.
 
 - Example A: HTTP server with explicit transport
-  - Annotation: @Mcp(transport: McpTransport.http) on main()
-  - Effect: Generator produces HTTP server code and prints the listening port
+  - Annotation: @Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0') on main()
+  - Effect: Generator produces HTTP server code listening on port 8080
   - Related files: [example.dart](file://example/bin/example.dart), [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
-- Example B: Multiple @Tool annotations on static methods
-  - Annotations: @Tool(description: "...") on several static methods
-  - Effect: Each method becomes a registered tool with its own input schema
-  - Related files: [todo_store.dart](file://example/lib/src/todo_store.dart), [user_store.dart](file://example/lib/src/user_store.dart)
+- Example B: Multiple @Tool annotations with @Parameter metadata
+  - Annotations: @Tool(description: "...") with @Parameter on several static methods
+  - Effect: Each method becomes a registered tool with enhanced parameter metadata
+  - Related files: [user_store.dart](file://example/lib/src/user_store.dart), [todo_store.dart](file://example/lib/src/todo_store.dart)
 
-- Example C: Tool description fallback to doc comment
+- Example C: Rich parameter metadata with validation
+  - Annotations: @Parameter with title, description, example, pattern, sensitive
+  - Effect: Enhanced parameter presentation with client-side validation
+  - Related files: [user_store.dart](file://example/lib/src/user_store.dart)
+
+- Example D: Tool description fallback to doc comment
   - Annotation: @Tool() without description
-  - Effect: Description taken from method’s doc comment
+  - Effect: Description taken from method's doc comment
   - Related files: [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
-- Example D: Optional parameters and named parameters
+- Example E: Optional parameters and named parameters
   - Signature: method with optional positional and named parameters
   - Effect: Generated handler casts arguments with null-aware logic; schema marks non-optional fields as required
   - Related files: [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart), [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 
-- Example E: Custom class parameters and nested lists
+- Example F: Complex parameter validation
+  - Annotations: @Parameter with minimum, maximum, pattern, enumValues
+  - Effect: Client-side validation enforces numeric ranges, string patterns, and allowed values
+  - Related files: [user_store.dart](file://example/lib/src/user_store.dart)
+
+- Example G: Custom class parameters and nested lists
   - Signature: method with List<CustomClass> and CustomClass fields
   - Effect: SchemaBuilder builds nested object schemas; templates convert lists using fromJson
   - Related files: [schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart), [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart), [todo.dart](file://example/lib/src/todo.dart), [user.dart](file://example/lib/src/user.dart)
 
 **Section sources**
 - [example.dart](file://example/bin/example.dart)
-- [todo_store.dart](file://example/lib/src/todo_store.dart)
 - [user_store.dart](file://example/lib/src/user_store.dart)
+- [todo_store.dart](file://example/lib/src/todo_store.dart)
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 - [schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart)
 - [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
@@ -258,7 +353,9 @@ Note: The following examples describe effects without reproducing code content.
 
 - Metadata precedence
   - @Tool.description takes precedence over doc comment
-  - If both are missing, a default placeholder is used
+  - @Parameter.title takes precedence over parameter name
+  - @Parameter.description falls back to parameter doc comment
+  - If both are missing, defaults are applied
 
 - Execution parameter
   - @Tool.execution is reserved and currently ignored; avoid relying on it
@@ -268,14 +365,27 @@ Note: The following examples describe effects without reproducing code content.
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 
 ### Advanced Usage Patterns and Best Practices
-- Combine @Mcp and @Tool effectively
+**Updated** Enhanced patterns now leverage comprehensive parameter metadata capabilities.
+
+- Combine @Mcp, @Tool, and @Parameter effectively
   - Place @Mcp on the library or main entry to trigger generation
   - Apply @Tool to each method intended as an MCP tool
+  - Use @Parameter for critical parameters requiring rich metadata
   - Prefer explicit description over relying on doc comments for clarity
+
+- Parameter metadata strategy
+  - Use @Parameter.title for user-friendly parameter labels
+  - Provide @Parameter.description for complex parameter explanations
+  - Include @Parameter.example for common input formats
+  - Apply @Parameter.minimum/@Parameter.maximum for numeric validation
+  - Use @Parameter.pattern for string format validation
+  - Mark sensitive parameters with @Parameter.sensitive
+  - Restrict enum-like parameters with @Parameter.enumValues
 
 - Schema hygiene
   - Keep parameters non-nullable when feasible to produce required fields in schemas
   - Use List<CustomClass> for strongly typed collections; ensure CustomClass has a fromJson method for conversion
+  - Leverage @Parameter for validation instead of runtime checks when possible
 
 - Transport selection
   - Use transport=http for HTTP-based integrations
@@ -283,13 +393,15 @@ Note: The following examples describe effects without reproducing code content.
 
 - JSON metadata
   - Enable generateJson=true to emit .mcp.json for tool catalogs
-  - Review emitted metadata to validate schema correctness
+  - Review emitted metadata to validate schema correctness and parameter validation rules
 
 **Section sources**
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
 ### Common Annotation Mistakes
+**Updated** Includes new mistakes related to @Parameter usage.
+
 - Missing @Mcp
   - Symptom: No .mcp.dart/.mcp.json generated
   - Fix: Add @Mcp(transport: ...) at library or element level
@@ -305,6 +417,17 @@ Note: The following examples describe effects without reproducing code content.
 - Reserved execution parameter
   - Symptom: Confusion about execution metadata
   - Fix: Do not rely on @Tool.execution; it is reserved and ignored
+
+- Parameter metadata type mismatches
+  - Symptom: Validation errors or unexpected behavior
+  - Fix: Ensure @Parameter.example type matches parameter type
+  - Fix: Use consistent types in @Parameter.enumValues
+  - Fix: Provide valid regex patterns in @Parameter.pattern
+
+- Overusing parameter metadata
+  - Symptom: Complex validation rules that are hard to maintain
+  - Fix: Use @Parameter selectively for critical parameters only
+  - Fix: Keep validation rules simple and user-friendly
 
 **Section sources**
 - [mcp_annotation_test.dart](file://packages/easy_mcp_annotations/test/mcp_annotation_test.dart)
@@ -343,8 +466,10 @@ Builder --> Sb["schema_builder.dart"]
   - Null-aware casting reduces runtime errors and improves robustness
 - Import deduplication
   - Generated code collects unique imports for custom List inner types and per-tool source imports
-
-[No sources needed since this section provides general guidance]
+- Parameter metadata processing
+  - @Parameter annotations are processed during AST traversal
+  - Validation rules are validated for type consistency
+  - Complex enum values are normalized to supported types
 
 ## Troubleshooting Guide
 - No generated artifacts
@@ -362,9 +487,15 @@ Builder --> Sb["schema_builder.dart"]
 - Reserved execution parameter
   - Remove or ignore @Tool.execution; it is reserved and ignored
 
+- Parameter metadata issues
+  - Verify @Parameter types match expected values
+  - Check that @Parameter.example is compatible with parameter type
+  - Ensure @Parameter.pattern is a valid regular expression
+  - Validate @Parameter.enumValues contain supported types
+
 **Section sources**
 - [mcp_annotation_test.dart](file://packages/easy_mcp_annotations/test/mcp_annotation_test.dart)
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
 ## Conclusion
-Easy MCP’s annotation system offers a concise and powerful way to expose Dart functions as MCP tools. By combining @Mcp for transport configuration and @Tool for metadata, developers can quickly generate transport-ready servers and accurate JSON schemas. Following the best practices and understanding precedence rules ensures predictable and maintainable code generation.
+Easy MCP's annotation system offers a concise and powerful way to expose Dart functions as MCP tools. Version 0.2.0 significantly enhances the system with comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation, validation, and user experience improvements. By combining @Mcp for transport configuration, @Tool for metadata, and @Parameter for detailed parameter information, developers can quickly generate transport-ready servers with sophisticated parameter handling and accurate JSON schemas. Following the best practices and understanding precedence rules ensures predictable and maintainable code generation with enhanced user experience capabilities.

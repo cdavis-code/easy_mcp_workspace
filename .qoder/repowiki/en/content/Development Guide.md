@@ -19,7 +19,17 @@
 - [packages/easy_mcp_generator/test/templates_test.dart](file://packages/easy_mcp_generator/test/templates_test.dart)
 - [example/pubspec.yaml](file://example/pubspec.yaml)
 - [example/bin/example.dart](file://example/bin/example.dart)
+- [CHANGELOG.md](file://CHANGELOG.md)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated version information to reflect 0.2.0 release across all packages
+- Added comprehensive @Parameter annotation documentation and best practices
+- Enhanced publishing workflow with detailed checklist and security guidelines
+- Expanded development commands with new Melos scripts for improved workflow
+- Updated testing strategies with coverage reporting and quality gates
+- Improved version management procedures for coordinated package releases
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -36,10 +46,11 @@
 12. [Build System and Generated Code](#build-system-and-generated-code)
 13. [Extending the Framework](#extending-the-framework)
 14. [Release and Version Management](#release-and-version-management)
-15. [Conclusion](#conclusion)
+15. [Security Guidelines](#security-guidelines)
+16. [Conclusion](#conclusion)
 
 ## Introduction
-This development guide explains how to build, test, and contribute to the Easy MCP framework. It covers workspace management with Melos, the build system powered by build_runner, testing strategies, development environment setup, contribution workflows, and extension patterns for maintainers and extension developers.
+This development guide explains how to build, test, and contribute to the Easy MCP framework. It covers workspace management with Melos, the build system powered by build_runner, testing strategies, development environment setup, contribution workflows, and extension patterns for maintainers and extension developers. The framework has been updated to version 0.2.0 with enhanced @Parameter annotation support and comprehensive publishing procedures.
 
 ## Project Structure
 The repository is a Melos-managed workspace with three primary parts:
@@ -51,8 +62,8 @@ The repository is a Melos-managed workspace with three primary parts:
 ```mermaid
 graph TB
 Root["Workspace Root<br/>Melos scripts and pubspec"]
-Ann["Package: easy_mcp_annotations<br/>Annotations and enums"]
-Gen["Package: easy_mcp_generator<br/>Build runner generator"]
+Ann["Package: easy_mcp_annotations<br/>Version 0.2.0<br/>Annotations and enums"]
+Gen["Package: easy_mcp_generator<br/>Version 0.2.0<br/>Build runner generator"]
 Ex["Example App<br/>Usage demonstration"]
 Root --> Ann
 Root --> Gen
@@ -63,7 +74,7 @@ Gen --> Ann
 **Diagram sources**
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
 - [packages/easy_mcp_annotations/pubspec.yaml:1-28](file://packages/easy_mcp_annotations/pubspec.yaml#L1-L28)
-- [packages/easy_mcp_generator/pubspec.yaml:1-35](file://packages/easy_mcp_generator/pubspec.yaml#L1-L35)
+- [packages/easy_mcp_generator/pubspec.yaml:1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
 - [example/pubspec.yaml:1-22](file://example/pubspec.yaml#L1-L22)
 
 **Section sources**
@@ -71,21 +82,21 @@ Gen --> Ann
 - [README.md:1-120](file://README.md#L1-L120)
 
 ## Core Components
-- Annotations package: Defines McpTransport and annotations such as Mcp and Tool used to mark methods and libraries for MCP exposure.
-- Generator package: Implements a build_runner builder that parses annotated sources and emits MCP server code and JSON metadata.
+- Annotations package: Defines McpTransport and annotations such as Mcp and Tool used to mark methods and libraries for MCP exposure. Now includes comprehensive @Parameter annotation support for enhanced parameter metadata.
+- Generator package: Implements a build_runner builder that parses annotated sources and emits MCP server code and JSON metadata with rich parameter validation.
 
 Key responsibilities:
-- easy_mcp_annotations: Provide stable, minimal annotation APIs consumed by generators.
-- easy_mcp_generator: Parse AST, extract tool metadata, generate server code and JSON schema, and wire transport-specific handlers.
+- easy_mcp_annotations: Provide stable, minimal annotation APIs with @Parameter support for enhanced parameter metadata consumption by generators.
+- easy_mcp_generator: Parse AST, extract tool metadata including parameter annotations, generate server code and JSON schema, and wire transport-specific handlers.
 
 **Section sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L107)
-- [packages/easy_mcp_generator/README.md:1-85](file://packages/easy_mcp_generator/README.md#L1-L85)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L241)
+- [packages/easy_mcp_generator/README.md:1-156](file://packages/easy_mcp_generator/README.md#L1-L156)
 
 ## Architecture Overview
 The framework follows a layered architecture:
-- Annotations layer: Minimal Dart APIs for marking code.
-- Generator layer: AST-based code generation for stdio and HTTP transports.
+- Annotations layer: Minimal Dart APIs for marking code with enhanced @Parameter support for rich metadata.
+- Generator layer: AST-based code generation for stdio and HTTP transports with comprehensive parameter validation.
 - Example layer: Demonstrates usage and validates end-to-end behavior.
 
 ```mermaid
@@ -94,6 +105,7 @@ subgraph "Annotations Layer"
 A1["McpTransport enum"]
 A2["Mcp annotation"]
 A3["Tool annotation"]
+A4["@Parameter annotation<br/>Enhanced metadata support"]
 end
 subgraph "Generator Layer"
 G1["mcp_builder.dart<br/>Build pipeline"]
@@ -107,6 +119,7 @@ end
 A1 --> G1
 A2 --> G1
 A3 --> G1
+A4 --> G1
 G1 --> G2
 G1 --> G3
 G1 --> G4
@@ -114,7 +127,7 @@ G3 --> E1
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L107)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L241)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart)
 - [packages/easy_mcp_generator/lib/builder/templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
@@ -124,7 +137,7 @@ G3 --> E1
 ## Detailed Component Analysis
 
 ### Annotations Package
-The annotations define transport mode and tool metadata. They are intentionally minimal and stable to support long-term compatibility.
+The annotations define transport mode and tool metadata with comprehensive @Parameter support. They are intentionally minimal and stable to support long-term compatibility.
 
 ```mermaid
 classDiagram
@@ -136,26 +149,38 @@ class McpTransport {
 class Mcp {
 +McpTransport transport
 +bool generateJson
++int port
++String address
 }
 class Tool {
 +String? description
 +List<String>? icons
 +Map<String,Object?>? execution
 }
+class Parameter {
++String? title
++String? description
++Object? example
++num? minimum
++num? maximum
++String? pattern
++bool sensitive
++List<Object?>? enumValues
+}
 Mcp --> McpTransport : "uses"
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L107)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L241)
 
 **Section sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L107)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L241)
 - [packages/easy_mcp_annotations/pubspec.yaml:1-28](file://packages/easy_mcp_annotations/pubspec.yaml#L1-L28)
 
 ### Generator Package
 The generator uses build_runner to process annotated sources and emit:
 - A .mcp.dart server implementation (stdio or HTTP)
-- A .mcp.json metadata file with tool schemas
+- A .mcp.json metadata file with tool schemas including parameter validation rules
 
 ```mermaid
 sequenceDiagram
@@ -166,7 +191,8 @@ participant TM as "templates.dart"
 participant DE as "doc_extractor.dart"
 BR->>MB : Discover annotated sources
 MB->>DE : Extract doc comments for descriptions
-MB->>SB : Build JSON Schema from types
+MB->>MB : Extract @Parameter metadata
+MB->>SB : Build JSON Schema with validation rules
 MB->>TM : Render server code templates
 TM-->>BR : Write .mcp.dart and .mcp.json
 ```
@@ -178,9 +204,9 @@ TM-->>BR : Write .mcp.dart and .mcp.json
 - [packages/easy_mcp_generator/lib/builder/doc_extractor.dart](file://packages/easy_mcp_generator/lib/builder/doc_extractor.dart)
 
 **Section sources**
-- [packages/easy_mcp_generator/README.md:1-85](file://packages/easy_mcp_generator/README.md#L1-L85)
+- [packages/easy_mcp_generator/README.md:1-156](file://packages/easy_mcp_generator/README.md#L1-L156)
 - [packages/easy_mcp_generator/build.yaml:1-12](file://packages/easy_mcp_generator/build.yaml#L1-L12)
-- [packages/easy_mcp_generator/pubspec.yaml:1-35](file://packages/easy_mcp_generator/pubspec.yaml#L1-L35)
+- [packages/easy_mcp_generator/pubspec.yaml:1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
 
 ### Example Application
 The example demonstrates HTTP transport usage and seeds data for demonstration.
@@ -210,8 +236,8 @@ The workspace coordinates three packages with explicit interdependencies and Mel
 ```mermaid
 graph LR
 WS["Workspace pubspec.yaml"]
-AN["easy_mcp_annotations"]
-EG["easy_mcp_generator"]
+AN["easy_mcp_annotations 0.2.0"]
+EG["easy_mcp_generator 0.2.0"]
 EX["example"]
 WS --> AN
 WS --> EG
@@ -222,18 +248,19 @@ EG --> AN
 **Diagram sources**
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
 - [packages/easy_mcp_annotations/pubspec.yaml:1-28](file://packages/easy_mcp_annotations/pubspec.yaml#L1-L28)
-- [packages/easy_mcp_generator/pubspec.yaml:1-35](file://packages/easy_mcp_generator/pubspec.yaml#L1-L35)
+- [packages/easy_mcp_generator/pubspec.yaml:1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
 - [example/pubspec.yaml:1-22](file://example/pubspec.yaml#L1-L22)
 
 **Section sources**
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
-- [packages/easy_mcp_generator/pubspec.yaml:1-35](file://packages/easy_mcp_generator/pubspec.yaml#L1-L35)
+- [packages/easy_mcp_generator/pubspec.yaml:1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
 
 ## Performance Considerations
 - Keep annotations minimal and stable to reduce generator overhead.
 - Prefer incremental builds by leveraging build_runner watch mode during development.
 - Avoid heavy reflection in generated code; rely on static templates and schema builders.
 - Use JSON schema generation judiciously to balance accuracy and build time.
+- Leverage @Parameter annotation caching for frequently used parameter metadata.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -241,10 +268,11 @@ Common issues and resolutions:
 - Generated code not updating: Clean generated files and rebuild using the Melos build commands.
 - Transport mismatch: Verify McpTransport setting in annotations matches the intended runtime environment.
 - JSON schema errors: Confirm parameter types are serializable and documented appropriately.
+- @Parameter annotation not recognized: Ensure @Parameter is imported from easy_mcp_annotations package.
 
 **Section sources**
 - [pubspec.yaml:35-38](file://pubspec.yaml#L35-L38)
-- [packages/easy_mcp_generator/README.md:1-85](file://packages/easy_mcp_generator/README.md#L1-L85)
+- [packages/easy_mcp_generator/README.md:1-156](file://packages/easy_mcp_generator/README.md#L1-L156)
 
 ## Contribution Guidelines
 - Fork and branch: Work from feature branches; keep commits small and focused.
@@ -261,7 +289,7 @@ Common issues and resolutions:
 - Prerequisites: Dart SDK ^3.9.0 and Melos.
 - Bootstrap the workspace: Run melos bootstrap to install dependencies across packages.
 - IDE: Open the root folder in your editor; enable Dart analysis and formatting.
-- Debugging: Use your IDE’s debugger to launch example/bin/example.dart or attach to generated server processes.
+- Debugging: Use your IDE's debugger to launch example/bin/example.dart or attach to generated server processes.
 
 **Section sources**
 - [README.md:85-109](file://README.md#L85-L109)
@@ -349,19 +377,19 @@ McpBuilder --> Templates : "renders"
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L107)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L241)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart)
 - [packages/easy_mcp_generator/lib/builder/templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 
 **Section sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L107)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L241)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart)
 - [packages/easy_mcp_generator/lib/builder/templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 
 ## Release and Version Management
-- Versioning: Both packages declare version fields; update versions consistently across related packages.
+- Versioning: Both packages declare version 0.2.0; update versions consistently across related packages.
 - Publishing: Use Melos scripts to dry-run and publish packages in the correct order.
 - Dependency updates: Use melos run upgrade and melos run outdated to manage dependency health.
 
@@ -370,5 +398,16 @@ McpBuilder --> Templates : "renders"
 - [packages/easy_mcp_annotations/pubspec.yaml:3](file://packages/easy_mcp_annotations/pubspec.yaml#L3)
 - [packages/easy_mcp_generator/pubspec.yaml:3](file://packages/easy_mcp_generator/pubspec.yaml#L3)
 
+## Security Guidelines
+- Parameter validation: Use @Parameter annotation with pattern, minimum, and maximum fields for input sanitization.
+- Sensitive data handling: Mark sensitive parameters with sensitive: true to enable masking in MCP clients.
+- Transport security: Use HTTP transport with proper address binding (avoid 0.0.0.0 in production environments).
+- Dependency updates: Regularly run melos run outdated to identify and update vulnerable dependencies.
+- Code review: Implement mandatory security review for any changes affecting parameter validation or transport security.
+
+**Section sources**
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:142-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L142-L241)
+- [packages/easy_mcp_generator/README.md:62-106](file://packages/easy_mcp_generator/README.md#L62-L106)
+
 ## Conclusion
-This guide outlined how to develop, test, and contribute to the Easy MCP framework. By leveraging Melos for workspace management, build_runner for code generation, and a clear separation of concerns between annotations and generators, contributors can reliably extend the framework and add new capabilities while maintaining high-quality standards.
+This guide outlined how to develop, test, and contribute to the Easy MCP framework version 0.2.0. By leveraging Melos for workspace management, build_runner for code generation, and a clear separation of concerns between annotations and generators, contributors can reliably extend the framework and add new capabilities while maintaining high-quality standards. The enhanced @Parameter annotation support provides comprehensive parameter metadata and validation capabilities for building secure and user-friendly MCP tools.

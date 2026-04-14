@@ -9,7 +9,17 @@
 - [README.md](file://packages/easy_mcp_annotations/README.md)
 - [README.md](file://README.md)
 - [example.dart](file://example/lib/src/user_store.dart)
+- [example_user_store.dart](file://example/lib/src/user_store.dart)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated parameter metadata extraction process to reflect complete implementation
+- Added comprehensive validation features section with all supported constraint types
+- Enhanced schema generation documentation with rich metadata application
+- Expanded security guidelines for sensitive data handling
+- Updated examples to demonstrate full parameter annotation capabilities
+- Added troubleshooting section for common parameter annotation issues
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -19,17 +29,22 @@
 5. [Metadata Extraction Process](#metadata-extraction-process)
 6. [Schema Generation](#schema-generation)
 7. [Validation Features](#validation-features)
-8. [Integration with MCP Tools](#integration-with-mcp-tools)
-9. [Best Practices](#best-practices)
-10. [Troubleshooting](#troubleshooting)
+8. [Security Considerations](#security-considerations)
+9. [Integration with MCP Tools](#integration-with-mcp-tools)
+10. [Best Practices](#best-practices)
+11. [Troubleshooting](#troubleshooting)
 
 ## Introduction
 
 The `@Parameter` annotation is a powerful feature in the Easy MCP ecosystem that allows developers to provide rich metadata for individual parameters in MCP tools. This annotation enhances the developer experience by enabling detailed parameter descriptions, validation rules, and user-friendly presentations in MCP clients.
 
+**Updated**: The `@Parameter` annotation system is now fully implemented with comprehensive metadata support including titles, descriptions, validation constraints, example values, and sensitive data handling.
+
 ## Overview
 
 The `@Parameter` annotation serves as an optional enhancement to the basic parameter extraction process. While the generator can automatically extract parameter information from Dart types and method signatures, the `@Parameter` annotation allows developers to provide additional metadata that improves the usability and reliability of MCP tools.
+
+**Updated**: The system now supports complete parameter metadata extraction with validation constraints, example values, and security considerations.
 
 Key capabilities include:
 - Human-readable titles and descriptions
@@ -37,10 +52,11 @@ Key capabilities include:
 - Example values for user guidance
 - Sensitive data marking
 - Enum value restrictions
+- Rich metadata integration with JSON schema generation
 
 ## Parameter Annotation Definition
 
-The `@Parameter` annotation is defined as a Dart class with the following structure:
+The `@Parameter` annotation is defined as a Dart class with comprehensive metadata support:
 
 ```mermaid
 classDiagram
@@ -144,9 +160,27 @@ Future<User> createUserWithPassword({
 }) async { ... }
 ```
 
+### Enum Value Restrictions
+
+Limit parameter values to specific allowed options:
+
+```dart
+@Tool(description: 'Create item with category')
+Future<Item> createItem({
+  @Parameter(
+    title: 'Category',
+    description: 'Item category',
+    enumValues: ['electronics', 'clothing', 'food', 'other'],
+    example: 'electronics',
+  )
+  String? category,
+}) async { ... }
+```
+
 **Section sources**
 - [README.md:77-104](file://packages/easy_mcp_annotations/README.md#L77-L104)
 - [README.md:106-118](file://packages/easy_mcp_annotations/README.md#L106-L118)
+- [example_user_store.dart:52-72](file://example/lib/src/user_store.dart#L52-L72)
 
 ## Metadata Extraction Process
 
@@ -240,6 +274,28 @@ The `sensitive` flag indicates parameters containing confidential information th
 
 **Section sources**
 - [mcp_annotations.dart:194-218](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L194-L218)
+
+## Security Considerations
+
+### Sensitive Data Protection
+Parameters marked with `sensitive: true` should be handled with care:
+- Masked in logs and UI displays
+- Not included in example values
+- Consider encryption for storage
+- Implement proper access controls
+
+### Input Validation
+Always validate user input regardless of annotation presence:
+- Use pattern matching for string validation
+- Apply minimum/maximum constraints for numeric types
+- Validate enum values against allowed sets
+- Sanitize input data before processing
+
+### Example Value Security
+Example values should not contain real sensitive data:
+- Use placeholder values instead of real credentials
+- Avoid including production data in examples
+- Regularly review examples for security compliance
 
 ## Integration with MCP Tools
 
