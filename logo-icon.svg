@@ -11,7 +11,11 @@
     <path d="M72 35 L78 50 L72 65 L67 62 L72 50 L67 38 Z"/>
   </g>
   
-  <!-- MCP text -->
-  <text x="50" y="54" font-family="Arial, sans-serif" font-size="18" font-weight="bold" 
-        fill="white" text-anchor="middle">MCP</text>
+  <!-- easy text on top -->
+  <text x="50" y="48" font-family="Arial, sans-serif" font-size="14" font-weight="bold" 
+        fill="white" text-anchor="middle">easy</text>
+  
+  <!-- mcp text below -->
+  <text x="50" y="64" font-family="Arial, sans-serif" font-size="16" font-weight="bold" 
+        fill="#13B9FD" text-anchor="middle">mcp</text>
 </svg>
