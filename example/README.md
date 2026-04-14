@@ -74,42 +74,39 @@ The server uses `dart_mcp` with stdio transport. It communicates via JSON-RPC 2.
 
 ### Testing the Server
 
-Send JSON-RPC requests via stdin to test:
+The server uses `dart_mcp` with stdio transport. Each invocation starts a fresh server instance.
+
+**Initialize the server:**
 
 ```bash
-# Initialize and list tools
-(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}';
- echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}') | dart run example/lib/src/user.mcp.dart | jq -r '.'
-
-# Call a tool (after initialization)
-(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}';
- echo '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"createUser","arguments":{"name":"Alice Smith","email":"alice@example.com"}}}') | dart run example/lib/src/user.mcp.dart | jq -r '.'
+echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' \
+  | dart run example/lib/src/user.mcp.dart
 ```
 
-### Example Session
+Expected response:
+```json
+{"jsonrpc":"2.0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"mcp-server","version":"1.0.0"},"instructions":"Auto-generated MCP server"},"id":1}
+```
+
+**Initialize and list tools:**
 
 ```bash
-# 1. Initialize the server
-echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}' | dart run example/lib/src/user.mcp.dart
-
-# 2. List available tools
-echo '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}' | dart run example/lib/src/user.mcp.dart
-
-# 3. Create a user
-echo '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"createUser","arguments":{"name":"Alice Smith","email":"alice@example.com"}}}' | dart run example/lib/src/user.mcp.dart
-
-# 4. List all users
-echo '{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"listUsers","arguments":{}}}' | dart run example/lib/src/user.mcp.dart
-
-# 5. Search users
-echo '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"searchUsers","arguments":{"query":"Alice"}}}' | dart run example/lib/src/user.mcp.dart
+printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}\n{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}\n' \
+  | dart run example/lib/src/user.mcp.dart
 ```
 
-Or use an MCP client like Claude Desktop or the `mcp` CLI:
-
-```bash
-mcp-client run --stdio dart example/lib/src/user.mcp.dart
+Expected response (two JSON lines):
+```json
+{"jsonrpc":"2.0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"mcp-server","version":"1.0.0"},"instructions":"Auto-generated MCP server"},"id":1}
+{"jsonrpc":"2.0","result":{"tools":[{"name":"createUser","description":"Create a new user","inputSchema":{"type":"object","properties":{"name":{"type":"string"},"email":{"type":"string"}}}},{"name":"getUser","description":"Get user by ID","inputSchema":{"type":"object","properties":{"id":{"type":"integer"}},"required":["id"]}},{"name":"listUsers","description":"List all users","inputSchema":{"type":"object"}},{"name":"deleteUser","description":"Delete a user","inputSchema":{"type":"object","properties":{"id":{"type":"integer"}},"required":["id"]}},{"name":"searchUsers","description":"Search users by query","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}}]},"id":2}
 ```
+
+> **Note:** Tool calls (`tools/call`) require the server to stay alive while async handlers complete. For testing tool calls, use an MCP client like Claude Desktop, the `mcp` CLI, or run the server interactively:
+>
+> ```bash
+> dart run example/lib/src/user.mcp.dart
+> # Then type JSON-RPC requests manually, one per line
+> ```
 
 ## Project Structure
 
