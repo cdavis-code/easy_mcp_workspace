@@ -4,9 +4,9 @@
   <img src="../../images/logo-banner.svg" width="400" alt="easy_mcp">
 </p>
 
-Build Runner generator that creates MCP server code from @tool annotations.
+Build Runner generator that creates MCP server code from @Tool annotations.
 
-Processes Dart code annotated with `@mcp` and `@tool` from the `easy_mcp_annotations` package to generate complete MCP server implementations.
+Processes Dart code annotated with `@Mcp` and `@Tool` from the `easy_mcp_annotations` package to generate complete MCP server implementations.
 
 ## Installation
 
@@ -23,14 +23,14 @@ dev_dependencies:
 
 ## Usage
 
-1. Annotate your functions with `@mcp` and `@tool`:
+1. Annotate your functions with `@Mcp` and `@Tool`:
 
 ```dart
 import 'package:easy_mcp_annotations/mcp_annotations.dart';
 
-@mcp(transport: McpTransport.stdio)
+@Mcp(transport: McpTransport.stdio)
 class MyServer {
-  @tool(description: 'Create a new user')
+  @Tool(description: 'Create a new user')
   Future<bool> createUser(String name, String email) async {
     // Implementation here
     return true;
@@ -43,13 +43,13 @@ class MyServer {
 For HTTP transport, you can customize the port and bind address:
 
 ```dart
-@mcp(
+@Mcp(
   transport: McpTransport.http,
   port: 8080,           // Default: 3000
   address: '0.0.0.0',   // Default: '127.0.0.1' (loopback)
 )
 class MyServer {
-  @tool(description: 'Create a new user')
+  @Tool(description: 'Create a new user')
   Future<bool> createUser(String name, String email) async {
     // Implementation here
     return true;
@@ -83,10 +83,10 @@ This generates:
 
 - **AST-based parsing** - Uses `dart:analyzer` for reliable annotation detection
 - **Two transport modes** - stdio (JSON-RPC) and HTTP (Shelf-based) servers
-- **Configurable HTTP server** - Customize port and bind address via `@mcp` annotation
+- **Configurable HTTP server** - Customize port and bind address via `@Mcp` annotation
 - **Automatic JSON-Schema generation** - Maps Dart types to proper JSON Schema
 - **Optional parameter support** - Handles named and optional positional parameters
-- **Doc comment extraction** - Uses function doc comments when `@tool.description` not provided
+- **Doc comment extraction** - Uses function doc comments when `@Tool.description` not provided
 - **Dynamic method dispatch** - Generated `_dispatch` function routes to actual tool methods
 
 ## Example
