@@ -82,8 +82,15 @@ base class MCPServerWithTools extends MCPServer with ToolsSupport {
         description: 'Create a new user',
         inputSchema: Schema.object(
     properties: {
-      'name': Schema.string(),
-      'email': Schema.string(),
+      'name': Schema.string(
+      title: 'Full Name',
+      description: 'The user\'s full name (1-100 characters)'
+    ),
+      'email': Schema.string(
+      title: 'Email Address',
+      description: 'A valid email address for the user',
+      pattern: '^[\\w\\.-]+@[\\w\\.-]+\\.\\w+\$'
+    ),
     },
     required: ['name', 'email'],
   ),
@@ -143,7 +150,10 @@ base class MCPServerWithTools extends MCPServer with ToolsSupport {
         description: 'Search users by query',
         inputSchema: Schema.object(
     properties: {
-      'query': Schema.string(),
+      'query': Schema.string(
+      title: 'Search Query',
+      description: 'Text to search for in user names and emails'
+    ),
     },
     required: ['query'],
   ),

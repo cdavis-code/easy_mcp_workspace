@@ -20,10 +20,11 @@
 
 ## Update Summary
 **Changes Made**
-- Enhanced SchemaBuilder with robust conversion between Dart types and Schema.* expressions
-- Improved template system with separate implementations for HTTP and stdio transports
-- Added comprehensive support for transport-specific code generation
-- Updated type mapping strategy with enhanced schema generation capabilities
+- Enhanced parameter handling with comprehensive metadata extraction from @Parameter annotations
+- Improved type system integration with rich parameter descriptions and validation rules
+- Added validation constraint enforcement including title, description, examples, min/max values, patterns, and enum values
+- Enhanced SchemaBuilder with metadata-aware schema generation for primitive types
+- Updated type introspection to capture and apply parameter metadata during code generation
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -37,24 +38,25 @@
 9. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains Easy MCP's enhanced type system integration, focusing on automatic type mapping and schema generation from Dart types to JSON Schema validation rules. The system now features a robust SchemaBuilder that provides comprehensive conversion between Dart types and dart_mcp Schema.* expressions, along with an improved template system that handles both HTTP and stdio transports with separate implementations for transport-specific code generation. It covers primitive and complex type handling, null safety, optional parameters, custom serialization, circular reference protection, and how type information influences both server code generation and schema metadata.
+This document explains Easy MCP's enhanced type system integration, focusing on automatic type mapping and schema generation from Dart types to JSON Schema validation rules. The system now features comprehensive parameter metadata extraction from @Parameter annotations, providing rich descriptions, validation constraints, and enhanced user experience for MCP clients. The enhanced SchemaBuilder provides robust conversion between Dart types and dart_mcp Schema.* expressions with metadata-aware validation enforcement, along with an improved template system that handles both HTTP and stdio transports with separate implementations for transport-specific code generation. It covers primitive and complex type handling, null safety, optional parameters, custom serialization, circular reference protection, and how type information influences both server code generation and schema metadata.
 
 ## Project Structure
 The repository is organized into two primary packages and an example application:
-- easy_mcp_annotations: Defines the @mcp and @tool annotations used to mark methods for MCP exposure with transport configuration.
-- easy_mcp_generator: Implements the build-time code generator that reads annotated methods, introspects their types, generates server code, and optionally emits JSON metadata for schema validation.
-- example: Demonstrates real-world usage with typed models and tools, showcasing both stdio and HTTP transport configurations.
+- easy_mcp_annotations: Defines the @mcp, @tool, and @parameter annotations used to mark methods for MCP exposure with rich parameter metadata and transport configuration.
+- easy_mcp_generator: Implements the build-time code generator that reads annotated methods, introspects their types, extracts parameter metadata, generates server code, and optionally emits JSON metadata for schema validation.
+- example: Demonstrates real-world usage with typed models and tools, showcasing both stdio and HTTP transport configurations with comprehensive parameter annotations.
 
 ```mermaid
 graph TB
 subgraph "Annotations"
 A["easy_mcp_annotations<br/>mcp_annotations.dart"]
 E["McpTransport enum<br/>stdio/http"]
+P["Parameter annotation<br/>rich metadata support"]
 end
 subgraph "Generator"
 G["easy_mcp_generator<br/>mcp_generator.dart"]
-B["builder/mcp_builder.dart"]
-S["builder/schema_builder.dart"]
+B["builder/mcp_builder.dart<br/>Enhanced parameter metadata extraction"]
+S["builder/schema_builder.dart<br/>Metadata-aware schema generation"]
 T["builder/templates.dart"]
 D["builder/doc_extractor.dart"]
 HT["HttpTemplate<br/>HTTP server code"]
@@ -62,9 +64,7 @@ ST["StdioTemplate<br/>stdio server code"]
 end
 subgraph "Example"
 U["example/lib/src/user.dart"]
-TD["example/lib/src/todo.dart"]
-US["example/lib/src/user_store.dart"]
-TS["example/lib/src/todo_store.dart"]
+US["example/lib/src/user_store.dart<br/>Parameter annotation examples"]
 EX["example/bin/example.dart"]
 end
 A --> G
@@ -72,25 +72,21 @@ G --> B
 B --> S
 B --> T
 B --> D
+S --> P
 T --> HT
 T --> ST
-U --> US
-TD --> TS
 US --> EX
-TS --> EX
 ```
 
 **Diagram sources**
-- [mcp_annotations.dart:1-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L141)
+- [mcp_annotations.dart:142-240](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L142-L240)
 - [mcp_generator.dart:1-14](file://packages/easy_mcp_generator/lib/mcp_generator.dart#L1-L14)
-- [mcp_builder.dart:1-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L738)
-- [schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
+- [mcp_builder.dart:285-369](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L285-L369)
+- [schema_builder.dart:110-187](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L110-L187)
 - [templates.dart:1-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L630)
 - [doc_extractor.dart:1-106](file://packages/easy_mcp_generator/lib/builder/doc_extractor.dart#L1-L106)
 - [user.dart:1-42](file://example/lib/src/user.dart#L1-L42)
-- [todo.dart:1-46](file://example/lib/src/todo.dart#L1-L46)
-- [user_store.dart:1-144](file://example/lib/src/user_store.dart#L1-L144)
-- [todo_store.dart:1-236](file://example/lib/src/todo_store.dart#L1-L236)
+- [user_store.dart:51-157](file://example/lib/src/user_store.dart#L51-L157)
 - [example.dart:1-67](file://example/bin/example.dart#L1-L67)
 
 **Section sources**
@@ -99,66 +95,124 @@ TS --> EX
 - [pubspec.yaml:1-35](file://packages/easy_mcp_generator/pubspec.yaml#L1-L35)
 
 ## Core Components
-- **Enhanced SchemaBuilder**: Provides robust conversion between Dart types and dart_mcp Schema.* expressions, handling primitive types, collections, and complex objects with proper null safety and optional parameter support.
+- **Enhanced Parameter Metadata Extraction**: Comprehensive extraction of @Parameter annotation metadata including title, description, examples, validation constraints (min/max), patterns, sensitive data flags, and enum values for rich parameter descriptions.
+- **Metadata-Aware SchemaBuilder**: Enhanced schema generation that applies parameter metadata to primitive type schemas, providing validation constraints and user-friendly descriptions directly in the generated JSON Schema.
 - **Transport-Specific Templates**: Separate implementations for HTTP and stdio transports with specialized code generation for each protocol.
-- **Improved Type Introspection**: Enhanced Dart type analysis producing comprehensive JSON Schema maps and simplified JSON Schema strings for runtime validation.
+- **Improved Type Introspection**: Enhanced Dart type analysis producing comprehensive JSON Schema maps with metadata integration and simplified JSON Schema strings for runtime validation.
 - **Dual Transport Support**: Automatic selection between stdio (CLI-based) and HTTP (network-based) transport modes based on @Mcp annotation configuration.
 - **Advanced Custom Serialization**: Sophisticated handling of custom class serialization with cycle detection and import management.
 
 Key responsibilities:
-- **Primitive type mapping**: String, int, double/num, bool, DateTime with proper JSON Schema type declarations.
+- **Primitive type mapping**: String, int, double/num, bool, DateTime with proper JSON Schema type declarations and metadata application.
+- **Parameter validation constraints**: Numeric ranges (minimum/maximum), string patterns, enum restrictions, and sensitive data marking.
 - **Collection handling**: List<T> and Map<K,V> with recursive schema building and custom inner type support.
 - **Null safety**: Comprehensive handling of nullable Dart types and optional parameters with compile-time validation.
 - **Transport abstraction**: Separate code generation paths for HTTP and stdio protocols with protocol-specific optimizations.
-- **Schema generation**: Both detailed introspection maps and simplified schema strings for different validation scenarios.
+- **Schema generation**: Both detailed introspection maps and simplified schema strings with metadata enrichment for different validation scenarios.
 
 **Section sources**
-- [schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
-- [templates.dart:1-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L630)
+- [schema_builder.dart:110-187](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L110-L187)
+- [mcp_builder.dart:285-369](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L285-L369)
 - [mcp_builder.dart:17-27](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L17-L27)
 
 ## Architecture Overview
-The enhanced type system integration spans four stages with improved transport handling:
+The enhanced type system integration spans four stages with improved transport handling and comprehensive parameter metadata extraction:
 1. **Annotation discovery and transport configuration extraction**.
-2. **Enhanced type introspection** producing comprehensive JSON Schema maps.
-3. **Transport-specific schema generation** using SchemaBuilder.
+2. **Enhanced type introspection with parameter metadata extraction** producing comprehensive JSON Schema maps.
+3. **Transport-specific schema generation** using SchemaBuilder with metadata-aware validation enforcement.
 4. **Protocol-specific code generation** with separate HTTP and stdio implementations.
 
 ```mermaid
 sequenceDiagram
 participant Dev as "Developer"
 participant Gen as "McpBuilder"
+participant ParamMeta as "Parameter Metadata Extraction"
 participant Introspect as "_introspectType"
 participant SB as "SchemaBuilder"
 participant TT as "TransportTemplate"
 participant Out as "Generated Code"
-Dev->>Gen : "Run build_runner with @Mcp transport config"
+Dev->>Gen : "Run build_runner with @Mcp/@Parameter annotations"
 Gen->>Gen : "_extractAllTools() + _findTransport()"
+Gen->>ParamMeta : "_extractParameterMetadata() from @Parameter"
+ParamMeta-->>Gen : "parameterMetadata (title, description, examples, validation)"
 Gen->>Introspect : "_introspectType(param.type)"
 Introspect-->>Gen : "schemaMap (enhanced JSON Schema)"
-Gen->>SB : "buildObjectSchema(params)"
-SB-->>Gen : "Schema.* expression (robust conversion)"
+Gen->>SB : "buildObjectSchema(params) with metadata"
+SB->>SB : "_applyMetadataToSchema() for primitive types"
+SB-->>Gen : "Schema.* expression with validation constraints"
 Gen->>TT : "StdioTemplate.generate() or HttpTemplate.generate()"
 TT-->>Out : "Transport-specific server code + serializers"
-Gen-->>Dev : ".mcp.dart + .mcp.json (optional)"
+Gen-->>Dev : ".mcp.dart + .mcp.json (with enriched metadata)"
 ```
 
 **Diagram sources**
 - [mcp_builder.dart:34-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L77)
+- [mcp_builder.dart:285-369](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L285-L369)
 - [mcp_builder.dart:59-61](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L59-L61)
-- [schema_builder.dart:68-98](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L68-L98)
+- [schema_builder.dart:68-108](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L68-L108)
+- [schema_builder.dart:110-187](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L110-L187)
 - [templates.dart:21-61](file://packages/easy_mcp_generator/lib/builder/templates.dart#L21-L61)
 
 ## Detailed Component Analysis
+
+### Enhanced Parameter Metadata Extraction
+The system now provides comprehensive parameter metadata extraction from @Parameter annotations:
+
+**Metadata Fields Supported**:
+- **title**: Human-readable parameter title displayed in MCP clients
+- **description**: Detailed explanation of parameter purpose and usage
+- **example**: Example values to guide users and help LLMs understand expected format
+- **minimum/maximum**: Numeric validation constraints for int and double types
+- **pattern**: Regular expression pattern for string validation
+- **sensitive**: Flag marking sensitive data (passwords, API keys) for masking
+- **enumValues**: List of allowed values for enum-like parameters
+
+**Extraction Process**:
+- Type checker scans formal parameters for @Parameter annotations
+- ConstantReader extracts metadata values with proper type checking
+- Supports mixed types: String, int, double, bool, and list values
+- Handles null/empty values gracefully with fallback logic
+- Integrates extracted metadata into parameter schema generation
+
+**Section sources**
+- [mcp_annotations.dart:175-240](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L175-L240)
+- [mcp_builder.dart:285-369](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L285-L369)
+
+### Metadata-Aware SchemaBuilder: Enhanced Validation Constraints
+The SchemaBuilder now provides sophisticated metadata application to primitive type schemas:
+
+**Metadata Application Rules**:
+- Only applies to simple primitive schemas (string, int, number, bool)
+- Complex schemas (objects, lists) are returned unchanged
+- Automatic detection of primitive schema types via regex pattern matching
+- Safe application of metadata without breaking complex type structures
+
+**Supported Metadata Transformations**:
+- **Title/Description**: Enhanced user experience with clear parameter labeling
+- **Examples**: Multiple example values for better guidance
+- **Numeric Constraints**: Min/max values for integer and number types
+- **Pattern Matching**: Regular expression validation for string parameters
+- **Enum Restrictions**: Allowed value lists for controlled input
+- **Sensitive Data**: Flagging for masking in client interfaces
+
+**Schema Generation Flow**:
+1. Generate base primitive schema (Schema.string(), Schema.int(), etc.)
+2. Apply metadata transformations if present
+3. Return enhanced schema with validation constraints
+4. Preserve complex types without modification
+
+**Section sources**
+- [schema_builder.dart:110-187](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L110-L187)
+- [schema_builder.dart:68-108](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L68-L108)
 
 ### Enhanced SchemaBuilder: Robust Type Conversion
 The SchemaBuilder now provides comprehensive conversion between Dart types and dart_mcp Schema.* expressions with enhanced capabilities:
 
 **Primitive Type Handling**:
-- String → Schema.string()
-- int → Schema.int()
-- double/num → Schema.number()
-- bool → Schema.bool()
+- String → Schema.string() with optional metadata enhancement
+- int → Schema.int() with optional min/max constraints
+- double/num → Schema.number() with optional numeric validation
+- bool → Schema.bool() with optional metadata
 
 **Collection Type Processing**:
 - List<T> → Schema.list(items: fromType(T) or fromSchemaMap(items))
@@ -360,7 +414,7 @@ The enhanced system provides comprehensive type validation with improved runtime
 - Enhanced metadata generation when enabled via @mcp(generateJson: true)
 - Comprehensive tool input schema emission for external consumers
 - Improved schema structure with better property and required field handling
-- Enhanced metadata formatting and organization
+- Enhanced metadata formatting and organization with parameter metadata
 
 **Section sources**
 - [schema_builder.dart:29-66](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L29-L66)
@@ -415,18 +469,21 @@ The enhanced pipeline provides improved integration with the build system:
 - Custom classes with public, non-static, non-private fields: enhanced required field inference
 - DateTime mapping to string with date-time format: improved schema generation
 - Async tools with Future return types: enhanced async handling in both transport modes
+- **Enhanced Parameter Metadata**: Rich parameter descriptions with validation constraints
 
 **Enhanced Unsupported or Limited Scenarios**:
 - Map<K,V> introspection limitations: both K and V still treated generically
 - Union or intersection types: fall back to generic object mapping with improved handling
 - Complex cyclic references: handled conservatively with enhanced cycle detection
 - Transport-specific limitations: HTTP transport requires shelf package, stdio transport requires CLI environment
+- **Metadata Limitations**: Complex schemas (objects, lists) cannot receive metadata enhancements
 
 **Improved Workarounds**:
 - Map<K,V> strict validation: define dedicated custom classes with explicit fields
 - Union handling: introduce sealed hierarchy or wrapper classes with enhanced serialization
 - Complex nested structures: prefer flattening or intermediate DTOs with better performance
 - Transport selection: choose stdio for CLI environments, HTTP for network-based clients
+- **Metadata Application**: Use @Parameter only for primitive types where validation constraints are needed
 
 **Section sources**
 - [mcp_builder.dart:363-366](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L363-L366)
@@ -451,6 +508,12 @@ The enhanced example demonstrates improved type system integration:
 - HTTP transport configuration with port and address settings
 - Enhanced server startup with better initialization and data seeding
 - Improved client interaction with proper error handling
+
+**Enhanced Parameter Metadata**:
+- Rich parameter descriptions with validation constraints
+- Email pattern validation for proper format checking
+- Example values for better user guidance
+- Sensitive data marking for security considerations
 
 ```mermaid
 classDiagram
@@ -525,6 +588,7 @@ CB["Code_builder"] --> MB
 MB --> SB["SchemaBuilder"]
 MB --> TT["TransportTemplates"]
 MB --> DE["DocExtractor"]
+SB --> PM["Parameter Metadata"]
 SB --> DM["dart_mcp Schema.*"]
 TT --> DM
 TT --> SH["Shelf (HTTP only)"]
@@ -546,6 +610,7 @@ The enhanced system provides improved performance characteristics:
 - Transport-specific optimizations for stdio and HTTP protocols
 - Reduced template generation overhead with selective conversion logic
 - Better import management reducing compilation time for large projects
+- **Metadata processing overhead**: Parameter metadata extraction adds minimal processing cost during build time
 
 ## Troubleshooting Guide
 Enhanced troubleshooting guidance for the improved system:
@@ -565,6 +630,12 @@ Enhanced troubleshooting guidance for the improved system:
 - Import statement conflicts: Check for duplicate imports and resolve naming conflicts
 - Runtime exceptions during deserialization: Enhanced error handling with detailed logging
 
+**Enhanced Parameter Metadata Issues**:
+- **Missing parameter metadata**: Ensure @Parameter annotations are properly placed on parameters
+- **Invalid metadata values**: Check that example values match parameter types
+- **Unsupported metadata combinations**: Remember that metadata only applies to primitive types
+- **Validation constraint conflicts**: Ensure minimum/maximum values are appropriate for parameter types
+
 **Enhanced Optional Parameter Handling**:
 - Parameter flag verification: Ensure optional parameters are handled with nullable casts
 - Type mismatch errors: Review SchemaBuilder conversion and template generation logic
@@ -576,4 +647,4 @@ Enhanced troubleshooting guidance for the improved system:
 - [templates.dart:114-129](file://packages/easy_mcp_generator/lib/builder/templates.dart#L114-L129)
 
 ## Conclusion
-Easy MCP's enhanced type system integration provides robust automatic mapping from Dart types to JSON Schema with comprehensive transport support. The improved SchemaBuilder offers sophisticated conversion between Dart types and dart_mcp Schema.* expressions, while the enhanced template system provides separate implementations for HTTP and stdio transports with transport-specific optimizations. The system supports primitives, optional parameters, collections, and custom classes with careful serialization and circular reference safeguards. Enhanced transport configuration allows developers to choose between CLI-based stdio and network-based HTTP protocols. The generator's improved pipeline integrates seamlessly with the build system, producing both server scaffolding and optional JSON metadata for tool consumers. By following the recommended patterns and leveraging the enhanced features, developers can achieve strong type safety, predictable behavior, and optimal performance across both transport modes.
+Easy MCP's enhanced type system integration provides robust automatic mapping from Dart types to JSON Schema with comprehensive transport support and rich parameter metadata extraction. The improved SchemaBuilder offers sophisticated conversion between Dart types and dart_mcp Schema.* expressions with metadata-aware validation enforcement, while the enhanced template system provides separate implementations for HTTP and stdio transports with transport-specific optimizations. The system supports primitives, optional parameters, collections, and custom classes with careful serialization and circular reference safeguards. Enhanced parameter metadata extraction from @Parameter annotations provides rich descriptions, validation constraints, and user-friendly parameter presentations for MCP clients. Enhanced transport configuration allows developers to choose between CLI-based stdio and network-based HTTP protocols. The generator's improved pipeline integrates seamlessly with the build system, producing both server scaffolding and optional JSON metadata for tool consumers. By following the recommended patterns and leveraging the enhanced features, developers can achieve strong type safety, predictable behavior, optimal performance across both transport modes, and enhanced user experience through comprehensive parameter metadata.

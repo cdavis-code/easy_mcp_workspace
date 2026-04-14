@@ -31,7 +31,7 @@
   
   <!-- Tagline -->
   <text x="240" y="75" font-family="Arial, sans-serif" font-size="14" 
-        fill="white" opacity="0.9">Dart MCP Server Generation Made Easy</text>
+        fill="white" opacity="0.9">MCP Server Generation Made Easy</text>
   
   <!-- Decorative elements -->
   <circle cx="550" cy="30" r="4" fill="#13B9FD" opacity="0.6"/>

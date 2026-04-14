@@ -8,7 +8,6 @@
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 - [packages/easy_mcp_generator/lib/builder/templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart)
-- [packages/easy_mcp_generator/test/templates_test.dart](file://packages/easy_mcp_generator/test/templates_test.dart)
 - [example/bin/example.mcp.dart](file://example/bin/example.mcp.dart)
 - [example/bin/example.dart](file://example/bin/example.dart)
 - [example/lib/src/user_store.dart](file://example/lib/src/user_store.dart)
@@ -18,11 +17,12 @@
 
 ## Update Summary
 **Changes Made**
-- Updated Core Components section to reflect dynamic port configuration and address binding capabilities
-- Enhanced Port Configuration and Loopback Binding section with new dynamic configuration features
+- Enhanced Core Components section to reflect comprehensive port customization and address binding capabilities
+- Expanded Port Configuration and Loopback Binding section with detailed Docker container and remote access scenarios
 - Added sophisticated transport detection mechanisms for HTTP vs stdio transport selection
 - Updated Server Lifecycle Management to include proper cleanup procedures
-- Enhanced Practical Examples with dynamic configuration scenarios
+- Enhanced Practical Examples with dynamic configuration scenarios for various deployment environments
+- Added comprehensive security considerations for Docker and remote access deployments
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -38,7 +38,7 @@
 11. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the HTTP transport implementation for Easy MCP's web-based communication system. It covers how the Shelf framework integrates with the MCP server to enable HTTP-based tool invocation, the bidirectional streaming architecture using StreamController and StreamChannel, dynamic port configuration and address binding, server lifecycle management, template generation for HTTP endpoints, response buffering with completer queues, and practical guidance for testing, monitoring, error handling, and performance optimization.
+This document explains the HTTP transport implementation for Easy MCP's web-based communication system. It covers how the Shelf framework integrates with the MCP server to enable HTTP-based tool invocation, the bidirectional streaming architecture using StreamController and StreamChannel, comprehensive port configuration and address binding capabilities, server lifecycle management, template generation for HTTP endpoints, response buffering with completer queues, and practical guidance for testing, monitoring, error handling, and performance optimization across various deployment scenarios including Docker containers and remote access environments.
 
 ## Project Structure
 The repository provides:
@@ -85,11 +85,11 @@ I --> J
 - [example/bin/example.dart:6](file://example/bin/example.dart#L6)
 - [example/lib/src/user_store.dart:1-144](file://example/lib/src/user_store.dart#L1-L144)
 - [example/lib/src/todo_store.dart:1-236](file://example/lib/src/todo_store.dart#L1-L236)
-- [README.md:1-120](file://README.md#L1-L120)
+- [README.md:1-124](file://README.md#L1-L124)
 - [example/pubspec.yaml:1-22](file://example/pubspec.yaml#L1-L22)
 
 **Section sources**
-- [README.md:1-120](file://README.md#L1-L120)
+- [README.md:1-124](file://README.md#L1-L124)
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
 
 ## Core Components
@@ -104,7 +104,7 @@ Key responsibilities:
 - HttpTemplate generates dynamic server code with configurable port and address binding.
 - Example server demonstrates HTTP transport with custom port and address configuration.
 
-**Updated** Enhanced transport detection and dynamic configuration capabilities
+**Updated** Enhanced transport detection and dynamic configuration capabilities with comprehensive port customization
 
 **Section sources**
 - [packages/easy_mcp_annotations/lib/mcp_annotations.dart:9-90](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L9-L90)
@@ -260,7 +260,7 @@ Listen --> Done(["Server Running"])
 - [packages/easy_mcp_generator/lib/builder/templates.dart:322-325](file://packages/easy_mcp_generator/lib/builder/templates.dart#L322-L325)
 - [example/bin/example.mcp.dart:55-59](file://example/bin/example.mcp.dart#L55-L59)
 
-**Updated** Enhanced with dynamic configuration extraction and conditional imports
+**Updated** Enhanced with dynamic configuration extraction and conditional imports for comprehensive deployment scenarios
 
 **Section sources**
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
@@ -423,21 +423,67 @@ Common issues and remedies:
 - HTTPS: The template binds to loopback and does not enable TLS; deploy behind a reverse proxy for TLS termination.
 - Network exposure: The example demonstrates binding to '0.0.0.0' for external access; use '127.0.0.1' for local-only access.
 - Dynamic configuration: Validate configuration inputs to prevent unexpected address/port combinations.
+- Docker deployments: Use environment variables for port and address configuration to avoid hardcoding sensitive values.
+- Remote access: Implement proper firewall rules and consider using VPN or SSH tunneling for secure remote access.
+
+**Updated** Enhanced security considerations for Docker and remote access deployments
 
 ## Practical Examples
+
+### Local Development Configuration
 - HTTP server startup with dynamic configuration:
-  - Use @Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0') to configure server binding.
-  - Run the generated server binary to start the Shelf HTTP server with custom port and address.
+  - Use @Mcp(transport: McpTransport.http, port: 8080, address: '127.0.0.1') to configure server binding for local development.
+  - Run the generated server binary to start the Shelf HTTP server with custom port and loopback address.
   - The server prints the effective port after binding.
 - Endpoint testing:
   - Send a POST request to the HTTP endpoint with a JSON payload compatible with the MCP server.
   - Expect a JSON response; verify non-POST requests receive an appropriate error status.
-- Integration with web clients:
-  - Configure the client to target the server's configured address and port.
-  - For browser clients, ensure CORS headers are set or serve via a trusted origin.
-- Transport detection scenarios:
-  - Test different placement of @Mcp annotation (top-level function, class, method).
-  - Verify that configuration extraction works regardless of annotation location.
+
+### Production Deployment Scenarios
+
+#### Docker Container Configuration
+- Environment-based configuration:
+  - Use @Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0') for Docker container deployments.
+  - Expose port 8080 in Dockerfile: `EXPOSE 8080`
+  - Run with: `docker run -p 8080:8080 your-mcp-image`
+- Docker Compose example:
+  ```yaml
+  version: '3.8'
+  services:
+    mcp-server:
+      build: .
+      ports:
+        - "8080:8080"
+      environment:
+        - MCP_PORT=8080
+        - MCP_ADDRESS=0.0.0.0
+      networks:
+        - app-network
+  
+  networks:
+    app-network:
+      driver: bridge
+  ```
+
+#### Remote Access Configuration
+- External network binding:
+  - Use @Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0') for remote access.
+  - Configure firewall rules to allow inbound connections on the specified port.
+  - Consider using a reverse proxy (Nginx/Apache) for SSL termination and load balancing.
+- Cloud deployment example:
+  - AWS EC2: Configure security group to allow inbound traffic on port 8080 from 0.0.0.0/0 or specific IP ranges.
+  - Kubernetes: Use Service with type LoadBalancer or Ingress controller for external access.
+
+### Integration with Web Clients
+- Browser clients: Ensure CORS headers are set or serve via a trusted origin.
+- Mobile applications: Configure network security policies to allow HTTP requests to the server.
+- Desktop applications: Use standard HTTP client libraries with proper error handling.
+
+### Transport Detection Scenarios
+- Test different placement of @Mcp annotation (top-level function, class, method).
+- Verify that configuration extraction works regardless of annotation location.
+
+**Updated** Added comprehensive Docker container and remote access deployment scenarios
 
 **Section sources**
 - [example/bin/example.dart:6](file://example/bin/example.dart#L6)
@@ -445,4 +491,4 @@ Common issues and remedies:
 - [packages/easy_mcp_generator/lib/builder/templates.dart:471-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L471-L501)
 
 ## Conclusion
-The Easy MCP HTTP transport leverages Shelf for request handling, StreamChannel for bidirectional streaming, and a completer-queue mechanism to synchronize responses. The generator automates server creation from annotated tool definitions with sophisticated transport detection and dynamic configuration extraction. The system now supports flexible port and address configuration, enabling deployment in various environments from local development to production deployments. For production, consider CORS, authentication, and HTTPS via a reverse proxy, and monitor performance to maintain responsiveness under load.
+The Easy MCP HTTP transport leverages Shelf for request handling, StreamChannel for bidirectional streaming, and a completer-queue mechanism to synchronize responses. The generator automates server creation from annotated tool definitions with sophisticated transport detection and dynamic configuration extraction. The system now supports flexible port and address configuration, enabling deployment in various environments from local development to production deployments including Docker containers and remote access scenarios. For production, consider CORS, authentication, and HTTPS via a reverse proxy, implement proper security measures for Docker deployments, and monitor performance to maintain responsiveness under load. The comprehensive configuration options and deployment flexibility make this solution suitable for diverse operational requirements.

@@ -8,13 +8,24 @@
 - [pubspec.yaml](file://packages/easy_mcp_generator/pubspec.yaml)
 - [mcp_generator.dart](file://packages/easy_mcp_generator/lib/mcp_generator.dart)
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
-- [stubs.dart](file://packages/easy_mcp_generator/lib/stubs.dart)
+- [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 - [example.dart](file://example/bin/example.dart)
 - [example.mcp.dart](file://example/bin/example.mcp.dart)
 - [user_store.dart](file://example/lib/src/user_store.dart)
+- [todo_store.dart](file://example/lib/src/todo_store.dart)
 - [todo.dart](file://example/lib/src/todo.dart)
 - [user.dart](file://example/lib/src/user.dart)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Enhanced documentation to reflect improved file organization and repository maintenance
+- Updated package structure documentation with current workspace layout
+- Added comprehensive coverage of HTTP transport configuration with port and address parameters
+- Expanded dual transport mode documentation with practical configuration examples
+- Improved code generation workflow documentation with HTTP-specific details
+- Enhanced type system integration documentation with List inner type handling
+- Updated dependency analysis with current package specifications
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -69,9 +80,9 @@ A -. depends on .-> B
 - [example.mcp.dart:1-68](file://example/bin/example.mcp.dart#L1-L68)
 
 **Section sources**
-- [README.md:1-120](file://README.md#L1-L120)
+- [README.md:1-124](file://README.md#L1-L124)
 - [pubspec.yaml:1-28](file://packages/easy_mcp_annotations/pubspec.yaml#L1-L28)
-- [pubspec.yaml:1-35](file://packages/easy_mcp_generator/pubspec.yaml#L1-L35)
+- [pubspec.yaml:1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
 
 ## Core Components
 - Annotations:
@@ -93,7 +104,7 @@ Key capabilities:
 **Section sources**
 - [mcp_annotations.dart:6-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L49)
 - [mcp_builder.dart:12-52](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L12-L52)
-- [README.md:77-84](file://README.md#L77-L84)
+- [README.md:79-88](file://README.md#L79-L88)
 
 ## Architecture Overview
 The Easy MCP pipeline consists of three stages:
@@ -127,6 +138,8 @@ Srv-->>Dev : Tools available to agents
 - @mcp:
   - transport: Selects stdio (JSON-RPC) or http (Shelf) mode.
   - generateJson: Controls whether to emit .mcp.json metadata.
+  - port: HTTP server port configuration (default: 3000).
+  - address: HTTP server bind address (default: '127.0.0.1').
 - @tool:
   - description: Overrides doc comment when present.
   - icons: Optional list of icon URLs.
@@ -141,6 +154,8 @@ classDiagram
 class Mcp {
 +McpTransport transport
 +bool generateJson
++int port
++String address
 }
 class Tool {
 +String? description
@@ -160,7 +175,7 @@ Mcp --> McpTransport : "uses"
 
 **Section sources**
 - [mcp_annotations.dart:6-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L49)
-- [README.md:55-76](file://README.md#L55-L76)
+- [README.md:59-80](file://README.md#L59-L80)
 
 ### Code Generation Workflow
 The generator performs the following steps:
@@ -176,7 +191,7 @@ CheckMcp --> |No| Exit["Skip"]
 CheckMcp --> |Yes| ScanLib["Scan library and imports"]
 ScanLib --> ExtractTools["Extract @tool functions"]
 ExtractTools --> Transport{"Transport mode"}
-Transport --> |http| GenHttp["Generate HTTP server"]
+Transport --> |http| GenHttp["Generate HTTP server<br/>with port/address config"]
 Transport --> |stdio| GenStdio["Generate stdio server"]
 GenHttp --> WriteDart[".mcp.dart"]
 GenStdio --> WriteDart
@@ -203,13 +218,14 @@ WriteJson --> Done
 - http (Shelf):
   - Suitable for web-based agents and containerized deployments.
   - Generates an HTTP server using Shelf to bridge requests to the MCP protocol.
+  - Supports configurable port and bind address parameters.
 
 Use cases:
 - stdio: Local development, Docker containers, and agent integrations that spawn processes.
 - http: Cloud-native deployments, reverse proxies, and browser-based agent UIs.
 
 **Section sources**
-- [README.md:57-64](file://README.md#L57-L64)
+- [README.md:81-88](file://README.md#L81-L88)
 - [mcp_builder.dart:36-38](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L36-L38)
 - [example.mcp.dart:55-61](file://example/bin/example.mcp.dart#L55-L61)
 
@@ -296,7 +312,7 @@ Gen-->>Lib : Aggregated tools with source metadata
 
 ### Example: HTTP Transport and Tool Registration
 - The example demonstrates:
-  - @Mcp configured for HTTP transport.
+  - @Mcp configured for HTTP transport with port 8080 and address '0.0.0.0'.
   - @Tool annotations on functions in the user store.
   - Generated HTTP server that registers tools and routes requests.
 
@@ -309,7 +325,7 @@ participant Http as "example.mcp.dart"
 Dev->>Bin : Annotate functions with @Mcp/@Tool
 Bin->>Gen : Run build_runner
 Gen-->>Http : Emit HTTP server code
-Http-->>Dev : Start HTTP server on port 3000
+Http-->>Dev : Start HTTP server on port 8080
 ```
 
 **Diagram sources**
@@ -354,7 +370,7 @@ Gen --> Sh["shelf"]
 - AST parsing overhead is minimized by scanning only libraries with @mcp annotations.
 - Cross-library discovery is scoped to package-local imports to reduce unnecessary work.
 - Schema generation avoids cycles by tracking visited types during introspection.
-- HTTP transport leverages Shelf’s efficient request handling for MCP message routing.
+- HTTP transport leverages Shelf's efficient request handling for MCP message routing.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -375,7 +391,7 @@ Common issues and resolutions:
 - [mcp_builder.dart:516-563](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L516-L563)
 
 ## Conclusion
-Easy MCP simplifies exposing Dart functions as MCP tools by combining a concise annotation system with robust AST-based parsing and template-driven code generation. The framework supports dual transport modes, integrates deeply with Dart’s type system, and enables cross-library tool discovery. Beginners can quickly adopt the framework by annotating functions and generating servers, while advanced users benefit from customizable transports, schema generation, and extensible templates.
+Easy MCP simplifies exposing Dart functions as MCP tools by combining a concise annotation system with robust AST-based parsing and template-driven code generation. The framework supports dual transport modes, integrates deeply with Dart's type system, and enables cross-library tool discovery. Beginners can quickly adopt the framework by annotating functions and generating servers, while advanced users benefit from customizable transports, schema generation, and extensible templates.
 
 ## Appendices
 - Getting started:
@@ -387,5 +403,5 @@ Easy MCP simplifies exposing Dart functions as MCP tools by combining a concise 
   - Prefer package-local imports for predictable tool discovery.
 
 **Section sources**
-- [README.md:16-54](file://README.md#L16-L54)
-- [README.md:77-84](file://README.md#L77-L84)
+- [README.md:20-58](file://README.md#L20-L58)
+- [README.md:79-88](file://README.md#L79-L88)

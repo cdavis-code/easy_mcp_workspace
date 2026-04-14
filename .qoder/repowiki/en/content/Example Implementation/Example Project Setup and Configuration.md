@@ -15,6 +15,14 @@
 - [README.md](file://README.md)
 </cite>
 
+## Update Summary
+**Changes Made**
+- Enhanced HTTP transport configuration documentation with customizable port and address settings
+- Updated repository URL references to reflect current GitHub repository structure
+- Modernized dependency management documentation with workspace resolution
+- Improved build system integration details for better developer experience
+- Added comprehensive troubleshooting guide for HTTP transport configuration
+
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Project Structure](#project-structure)
@@ -30,6 +38,8 @@
 ## Introduction
 This document explains how to set up and configure the example project that demonstrates generating and running an MCP server from annotated Dart code. It covers the project layout, dependency configuration, code generation process, entry point and server initialization, transport configuration, build and watch modes, generated code validation, and practical steps to run and test the example. It also clarifies how annotations are transformed into executable MCP servers and how to extend the example patterns for custom implementations.
 
+**Updated** Enhanced with improved HTTP transport configuration options and modernized dependency management practices.
+
 ## Project Structure
 The example project is organized as a Dart workspace with:
 - A top-level workspace configuration and documentation
@@ -43,8 +53,8 @@ Key files and roles:
 - example/bin/example.dart: Entry point annotated with @Mcp and imports stores to seed and demonstrate usage
 - example/bin/example.mcp.dart: Generated MCP server code (HTTP transport in this example)
 - example/lib/src/*.dart: Domain models and stores annotated with @Tool
-- packages/easy_mcp_annotations/pubspec.yaml: Defines the annotations package
-- packages/easy_mcp_generator/pubspec.yaml: Defines the generator package
+- packages/easy_mcp_annotations/pubspec.yaml: Defines the annotations package with modernized repository URLs
+- packages/easy_mcp_generator/pubspec.yaml: Defines the generator package with workspace resolution
 
 ```mermaid
 graph TB
@@ -100,22 +110,26 @@ Key responsibilities:
 - @Tool: Exposes static methods as MCP tools with descriptions and optional icons
 - Generated server: Registers tools, validates inputs via JSON schema, and delegates to store methods
 
+**Updated** Enhanced with HTTP transport customization options including port and address configuration.
+
 **Section sources**
 - [packages/easy_mcp_annotations/pubspec.yaml:1-28](file://packages/easy_mcp_annotations/pubspec.yaml#L1-L28)
 - [packages/easy_mcp_generator/pubspec.yaml:1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
 - [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L107)
 
 ## Architecture Overview
-The example uses HTTP transport for the MCP server. The generated server:
+The example uses HTTP transport for the MCP server with customizable port and address configuration. The generated server:
 - Initializes a StreamChannel for bidirectional communication
 - Wraps an MCPServer with ToolsSupport
 - Registers tools discovered from @Tool-annotated methods
 - Serves HTTP requests via Shelf and relays messages to/from the MCP channel
 
+**Updated** Enhanced HTTP transport configuration with configurable port (default 8080) and address binding options.
+
 ```mermaid
 graph TB
 CLIENT["MCP Client"]
-HTTP["Shelf HTTP Server<br/>port 3000"]
+HTTP["Shelf HTTP Server<br/>port 8080<br/>address 0.0.0.0"]
 CHANNEL["StreamChannel<String>"]
 SERVER["MCPServerWithTools<br/>ToolsSupport"]
 TOOLS_USER["UserStore tools"]
@@ -141,9 +155,11 @@ HTTP --> CLIENT
 ## Detailed Component Analysis
 
 ### Example Entry Point and Transport Configuration
-- The entry point declares @Mcp with transport set to HTTP
+- The entry point declares @Mcp with transport set to HTTP and custom port/address configuration
 - It seeds initial data and prints summaries to demonstrate runtime behavior
 - The generator reads this entry point to discover tools from imported libraries
+
+**Updated** Enhanced HTTP transport configuration with customizable port (8080) and address ('0.0.0.0') for production environments.
 
 ```mermaid
 sequenceDiagram
@@ -151,11 +167,11 @@ participant Dev as "Developer"
 participant Entry as "@Mcp entry point"
 participant Gen as "Generator"
 participant Out as ".mcp.dart"
-Dev->>Entry : "Add @Mcp(transport : http)"
+Dev->>Entry : "Add @Mcp(transport : http, port : 8080, address : '0.0.0.0')"
 Dev->>Gen : "Run build_runner"
 Gen->>Entry : "Parse annotations"
-Gen->>Out : "Emit HTTP server code"
-Out-->>Dev : "Generated server ready"
+Gen->>Out : "Emit HTTP server code with custom configuration"
+Out-->>Dev : "Generated server ready on port 8080"
 ```
 
 **Diagram sources**
@@ -170,6 +186,8 @@ Out-->>Dev : "Generated server ready"
 - The generated server sets up StreamControllers and StreamChannel
 - It initializes MCPServerWithTools and registers tools with input schemas derived from method signatures
 - Each tool handler extracts arguments, calls the corresponding store method, serializes results, and returns CallToolResult
+
+**Updated** Enhanced HTTP server configuration with proper port binding and address resolution for containerized deployments.
 
 ```mermaid
 sequenceDiagram
@@ -200,6 +218,8 @@ Queue-->>HTTP : "Return HTTP response"
 - UserStore and TodoStore define @Tool-annotated methods for CRUD and cross-entity operations
 - Methods include parameter validation, persistence to JSON files, and cache invalidation
 - Many methods coordinate updates across both stores to maintain referential integrity
+
+**Updated** Enhanced tool definitions with comprehensive parameter validation and cross-store synchronization.
 
 ```mermaid
 flowchart TD
@@ -235,19 +255,21 @@ Error --> Done
 
 ## Dependency Analysis
 The example app depends on:
-- easy_mcp_annotations: Provides @Mcp and @Tool
-- easy_mcp_generator: Dev dependency for code generation
-- dart_mcp: Runtime for MCP server
-- shelf and stream_channel: HTTP transport and streaming
+- easy_mcp_annotations: Provides @Mcp and @Tool with modernized workspace resolution
+- easy_mcp_generator: Dev dependency for code generation with updated analyzer support
+- dart_mcp: Runtime for MCP server with version 0.5.0
+- shelf and stream_channel: HTTP transport and streaming with updated versions
+
+**Updated** Modernized dependency management with workspace resolution and updated package versions.
 
 ```mermaid
 graph LR
 EX_APP["example/pubspec.yaml"]
 ANNOT["easy_mcp_annotations"]
 GEN["easy_mcp_generator"]
-DART_MCP["dart_mcp"]
-SHELF["shelf"]
-STREAM["stream_channel"]
+DART_MCP["dart_mcp ^0.5.0"]
+SHELF["shelf ^1.4.0"]
+STREAM["stream_channel ^2.1.0"]
 EX_APP --> ANNOT
 EX_APP --> DART_MCP
 EX_APP --> SHELF
@@ -270,8 +292,9 @@ EX_APP -.dev.-> GEN
 - Serialization: The generated server serializes results; ensure DTOs implement efficient serialization
 - HTTP overhead: The HTTP transport introduces network latency compared to stdio; monitor response times and tune concurrency
 - Tool registration: Generating schemas from types is automatic but can be optimized by minimizing unnecessary tool registrations
+- Port configuration: Custom ports (8080) provide flexibility for containerized deployments and production environments
 
-[No sources needed since this section provides general guidance]
+**Updated** Enhanced performance considerations for HTTP transport configuration and production deployment scenarios.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -283,11 +306,18 @@ Common issues and resolutions:
 - Generated server not found
   - Confirm the generator ran successfully and produced example/bin/example.mcp.dart
 - HTTP server fails to start
-  - Check port availability and firewall settings
-  - Validate the generated server’s HTTP handler logic
+  - Check port availability (8080) and firewall settings
+  - Validate the generated server's HTTP handler logic with custom port configuration
+  - Ensure address binding ('0.0.0.0') allows external connections
 - Tools not appearing
   - Verify @Tool annotations on static methods and that the entry point imports the libraries
   - Ensure the generator runs after adding new annotations
+- Repository URL issues
+  - Verify GitHub repository URLs in package configurations match current repository structure
+- Workspace resolution problems
+  - Ensure workspace resolution is properly configured in pubspec.yaml files
+
+**Updated** Enhanced troubleshooting guide with HTTP transport-specific issues and repository URL configuration.
 
 **Section sources**
 - [example/README.md:59-75](file://example/README.md#L59-L75)
@@ -295,29 +325,32 @@ Common issues and resolutions:
 - [README.md:87-109](file://README.md#L87-L109)
 
 ## Conclusion
-The example project demonstrates a complete pipeline: annotate Dart methods with @Mcp and @Tool, run the generator to produce an MCP server, and run the server to expose tools to clients. The HTTP transport example illustrates how the generator integrates with shelf and stream_channel to deliver a working MCP server. Following the setup and testing steps enables quick iteration and extension to custom domains.
+The example project demonstrates a complete pipeline: annotate Dart methods with @Mcp and @Tool, run the generator to produce an MCP server, and run the server to expose tools to clients. The HTTP transport example illustrates how the generator integrates with shelf and stream_channel to deliver a working MCP server with customizable port and address configuration. Following the setup and testing steps enables quick iteration and extension to custom domains.
 
-[No sources needed since this section summarizes without analyzing specific files]
+**Updated** Enhanced conclusion reflecting improved HTTP transport configuration and modernized dependency management.
 
 ## Appendices
 
 ### Step-by-Step Setup Instructions
 - Prerequisites
-  - Install dependencies in the workspace root
+  - Install dependencies in the workspace root using melon bootstrap
   - Use the documented commands to bootstrap and run tests/analyze/format
 - Configure the example app
-  - Add @Mcp to the entry point and @Tool to desired methods
+  - Add @Mcp to the entry point with HTTP transport and custom port/address configuration
   - Ensure imports include the annotated stores
 - Run code generation
   - From the workspace root, run build_runner to generate .mcp.dart
   - Optionally enable watch mode for continuous regeneration
 - Validate generated code
-  - Review example/bin/example.mcp.dart for tool registrations and HTTP server setup
+  - Review example/bin/example.mcp.dart for tool registrations and HTTP server setup with custom configuration
 - Run the server
   - Execute the generated server using dart run
+  - Server will listen on port 8080 with address 0.0.0.0
 - Test the server
   - Use the MCP Inspector CLI to list tools and call them
   - Alternatively, run the inspector in web UI mode for interactive testing
+
+**Updated** Enhanced setup instructions with HTTP transport configuration and custom port binding.
 
 **Section sources**
 - [example/README.md:5-11](file://example/README.md#L5-L11)
@@ -326,9 +359,12 @@ The example project demonstrates a complete pipeline: annotate Dart methods with
 - [README.md:87-109](file://README.md#L87-L109)
 
 ### Environment Requirements
-- Dart SDK version aligned with package requirements
+- Dart SDK version aligned with package requirements (^3.11.0)
 - Workspace management tooling as indicated by the root README
 - Node.js for MCP Inspector testing (as documented)
+- Proper repository URL configuration for package dependencies
+
+**Updated** Enhanced environment requirements with workspace resolution and repository URL configuration.
 
 **Section sources**
 - [packages/easy_mcp_annotations/pubspec.yaml:7-8](file://packages/easy_mcp_annotations/pubspec.yaml#L7-L8)
@@ -342,6 +378,9 @@ The example project demonstrates a complete pipeline: annotate Dart methods with
 - Regenerate code and rerun the server
 - Customize transport by changing @Mcp transport setting (stdio vs http)
 - Enhance models with richer serialization and validation as needed
+- Configure HTTP transport with custom port and address for production deployments
+
+**Updated** Enhanced extension guidance with HTTP transport customization for production environments.
 
 **Section sources**
 - [example/bin/example.dart:2-4](file://example/bin/example.dart#L2-L4)
