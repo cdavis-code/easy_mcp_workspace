@@ -7,19 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-14
+
 ### Added
+- Added support for `@Parameter` annotation for rich parameter metadata
+  - Extracts `title`, `description`, `example` for documentation
+  - Supports validation constraints: `minimum`, `maximum`, `pattern`, `enumValues`
+  - Supports `sensitive` flag for marking sensitive data
 - Added support for `port` parameter in HTTP transport configuration
 - Added support for `address` parameter in HTTP transport configuration
+- Added `generateJson` parameter to control `.mcp.json` metadata file generation
 - HTTP server now uses `io.InternetAddress.loopbackIPv4` for default address (127.0.0.1)
 - Conditional import of `dart:io` only when needed for HTTP transport
-- Updated documentation with HTTP transport configuration examples
+- Updated documentation with HTTP transport and `@Parameter` examples
 
 ### Security
 - Fixed information leakage in generated code - error messages no longer expose internal exception details
 - Generated error responses now return generic "An error occurred while processing the request." message
+- Added proper string escaping for regex patterns and special characters
 
 ### Fixed
 - Fixed unused import warning for `dart:io` in generated HTTP server code
+- Fixed annotation extraction to use `peek()` instead of `read()` for optional fields
+- Fixed complex schema corruption when applying metadata
+- Fixed dollar sign escaping in generated strings for regex patterns
 
 ## [0.1.2] - 2026-04-13
 ### Fixed
