@@ -6,7 +6,7 @@
 
 Dart annotations for exposing library methods as MCP tools.
 
-Provides the `@mcp` and `@tool` annotations used to define Model Context Protocol (MCP) servers and tools using Dart code that can be processed by the `easy_mcp_generator` build_runner package.
+Provides the `@Mcp` and `@Tool` annotations used to define Model Context Protocol (MCP) servers and tools using Dart code that can be processed by the `easy_mcp_generator` build_runner package.
 
 ## Installation
 
@@ -24,15 +24,15 @@ dependencies:
 ```dart
 import 'package:easy_mcp_annotations/mcp_annotations.dart';
 
-@mcp(transport: McpTransport.stdio)
+@Mcp(transport: McpTransport.stdio)
 class MyServer {
-  @tool(description: 'Create a new user')
+  @Tool(description: 'Create a new user')
   Future<bool> createUser(String name, String email) async {
     // Implementation here
     return true;
   }
 
-  @tool(description: 'Get user by ID')
+  @Tool(description: 'Get user by ID')
   Future<User?> getUser(int id) async {
     // Implementation here
     return null;
@@ -45,13 +45,13 @@ class MyServer {
 ```dart
 import 'package:easy_mcp_annotations/mcp_annotations.dart';
 
-@mcp(
+@Mcp(
   transport: McpTransport.http,
   port: 8080,
   address: '0.0.0.0',  // Use '0.0.0.0' to listen on all interfaces
 )
 class MyServer {
-  @tool(description: 'Create a new user')
+  @Tool(description: 'Create a new user')
   Future<bool> createUser(String name, String email) async {
     // Implementation here
     return true;
