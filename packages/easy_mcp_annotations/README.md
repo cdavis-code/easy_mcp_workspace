@@ -68,6 +68,52 @@ class MyServer {
 | `address` | `String` | `'127.0.0.1'` | HTTP bind address (only for HTTP transport). Use `'0.0.0.0'` to listen on all interfaces |
 | `generateJson` | `bool` | `false` | Whether to generate `.mcp.json` metadata file |
 
+### Parameter Annotations
+
+Use `@Parameter` to provide rich metadata for individual tool parameters:
+
+```dart
+@Tool(description: 'Create a new user')
+Future<User> createUser({
+  @Parameter(
+    title: 'Full Name',
+    description: 'The user\'s complete name',
+    example: 'John Doe',
+  )
+  required String name,
+  
+  @Parameter(
+    title: 'Email Address',
+    description: 'A valid email address',
+    example: 'john@example.com',
+    pattern: r'^[\w\.-]+@[\w\.-]+\.\w+$',
+  )
+  required String email,
+  
+  @Parameter(
+    title: 'Age',
+    description: 'User age in years',
+    minimum: 0,
+    maximum: 150,
+    example: 25,
+  )
+  int? age,
+}) async { ... }
+```
+
+#### @Parameter Annotation Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `title` | `String?` | `null` | Human-readable title for the parameter |
+| `description` | `String?` | `null` | Detailed description of the parameter |
+| `example` | `Object?` | `null` | Example value to guide users |
+| `minimum` | `num?` | `null` | Minimum value for numeric parameters |
+| `maximum` | `num?` | `null` | Maximum value for numeric parameters |
+| `pattern` | `String?` | `null` | Regular expression pattern for string validation |
+| `sensitive` | `bool` | `false` | Whether this parameter contains sensitive data |
+| `enumValues` | `List<Object?>?` | `null` | List of allowed values |
+
 See the [example](../../example) directory in the workspace root for a complete working example that demonstrates usage of both packages together.
 
 ## Features
@@ -75,6 +121,7 @@ See the [example](../../example) directory in the workspace root for a complete 
 - Simple annotations for defining MCP servers and tools
 - Support for both stdio (JSON-RPC) and HTTP transports
 - **Configurable HTTP server** - Customize port and bind address
+- **Rich parameter metadata** - Use `@Parameter` for titles, descriptions, examples, validation
 - Compatible with `easy_mcp_generator` for automatic server code generation
 - Null safety compatible (Dart 3.9+)
 

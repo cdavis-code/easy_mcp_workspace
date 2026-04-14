@@ -53,7 +53,21 @@ Future<void> main() async {
 // lib/src/user_store.dart
 class UserStore {
   @Tool(description: 'Create a new user')
-  static Future<User> createUser({required String name, required String email}) async { ... }
+  static Future<User> createUser({
+    @Parameter(
+      title: 'Full Name',
+      description: 'The user\'s full name (1-100 characters)',
+      example: 'John Doe',
+    )
+    required String name,
+    @Parameter(
+      title: 'Email Address',
+      description: 'A valid email address for the user',
+      example: 'john.doe@example.com',
+      pattern: r'^[\w\.-]+@[\w\.-]+\.\w+$',
+    )
+    required String email,
+  }) async { ... }
 
   @Tool(description: 'Get user by ID')
   static Future<User?> getUser(int id) async { ... }
@@ -61,6 +75,39 @@ class UserStore {
   @Tool(description: 'Get all todos assigned to a user')
   static Future<List<Todo>> getUserTodos(int userId) async { ... }
 }
+```
+
+#### Parameter Annotations
+
+Use `@Parameter` to provide rich metadata for individual parameters:
+
+```dart
+@Tool(description: 'Create a new item')
+static Future<Item> createItem({
+  @Parameter(
+    title: 'Item Name',
+    description: 'A descriptive name for the item',
+    example: 'My Awesome Item',
+  )
+  required String name,
+  
+  @Parameter(
+    title: 'Quantity',
+    description: 'Number of items (1-100)',
+    minimum: 1,
+    maximum: 100,
+    example: 5,
+  )
+  int quantity = 1,
+  
+  @Parameter(
+    title: 'Category',
+    description: 'Item category',
+    enumValues: ['electronics', 'clothing', 'food', 'other'],
+    example: 'electronics',
+  )
+  String? category,
+}) async { ... }
 ```
 
 ```dart

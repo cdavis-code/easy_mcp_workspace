@@ -48,13 +48,20 @@ class UserStore {
   }
 
   /// Creates a new user with the given name and email.
-  ///
-  /// ## Parameters
-  /// - `name` - The user's full name (1-100 characters)
-  /// - `email` - The user's email address
   @Tool(description: 'Create a new user')
   static Future<User> createUser({
+    @Parameter(
+      title: 'Full Name',
+      description: 'The user\'s full name (1-100 characters)',
+      example: 'John Doe',
+    )
     required String name,
+    @Parameter(
+      title: 'Email Address',
+      description: 'A valid email address for the user',
+      example: 'john.doe@example.com',
+      pattern: r'^[\w\.-]+@[\w\.-]+\.\w+$',
+    )
     required String email,
   }) async {
     final users = await _loadUsers();
@@ -129,7 +136,14 @@ class UserStore {
 
   /// Search users by query string.
   @Tool(description: 'Search users by query')
-  static Future<List<User>> searchUsers(String query) async {
+  static Future<List<User>> searchUsers(
+    @Parameter(
+      title: 'Search Query',
+      description: 'Text to search for in user names and emails',
+      example: 'john',
+    )
+    String query,
+  ) async {
     final users = await _loadUsers();
     final lowerQuery = query.toLowerCase();
     return users
