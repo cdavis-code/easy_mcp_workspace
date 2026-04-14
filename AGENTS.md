@@ -1,31 +1,133 @@
-# easy_mcp Development Guidelines
+# easy_mcp_workspace Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-04-12
+Auto-generated from all feature plans. Last updated: 2026-04-14
 
 ## Active Technologies
-- N/A (code generator, no persistence) (001-mcp-annotations)
-
-- Dart 3.9+ (null-safe) (001-mcp-annotations)
+- Dart 3.11+ (null-safe)
+- MCP (Model Context Protocol) server generation
+- Code generation via build_runner and source_gen
+- AST analysis using dart:analyzer
 
 ## Project Structure
 
 ```text
-src/
-tests/
+packages/
+├── easy_mcp_annotations/    # Annotations package (@Mcp, @Tool, @Parameter)
+│   ├── lib/
+│   │   ├── mcp_annotations.dart
+│   │   └── stubs.dart
+│   ├── example/
+│   └── pubspec.yaml
+├── easy_mcp_generator/      # Code generator package
+│   ├── lib/
+│   │   ├── builder/
+│   │   │   ├── mcp_builder.dart      # Main builder logic
+│   │   │   ├── schema_builder.dart   # Schema generation
+│   │   │   ├── templates.dart        # Code templates
+│   │   │   └── doc_extractor.dart    # Doc comment extraction
+│   │   └── mcp_generator.dart
+│   ├── example/
+│   └── pubspec.yaml
+example/                      # Working example
+├── lib/src/
+│   ├── user_store.dart
+│   ├── todo_store.dart
+│   ├── user.dart
+│   └── todo.dart
+├── bin/
+│   ├── example.dart
+│   └── example.mcp.dart      # Generated (do not edit)
+└── pubspec.yaml
+images/                       # Logo assets
+└── logo-banner.svg
 ```
 
 ## Commands
 
-# Add commands for Dart 3.9+ (null-safe)
+### Development
+```bash
+# Get dependencies
+melos bootstrap
+
+# Run code generation
+dart run build_runner build
+
+# Run tests
+melos run test
+
+# Static analysis
+melos run analyze
+
+# Format code
+melos run format
+```
+
+### Package Management
+```bash
+# Publish annotations package
+cd packages/easy_mcp_annotations && dart pub publish --force
+
+# Publish generator package
+cd packages/easy_mcp_generator && dart pub publish --force
+```
 
 ## Code Style
 
-Dart 3.9+ (null-safe): Follow standard conventions
+- Follow standard Dart conventions
+- Use PascalCase for annotation classes: `@Mcp`, `@Tool`, `@Parameter`
+- Use `peek()` instead of `read()` for optional annotation fields
+- Always escape backslashes and dollar signs in generated strings
+- Add comprehensive DartDoc comments to public APIs
+
+## Annotations
+
+### @Mcp
+Main server annotation with transport configuration:
+- `transport`: `McpTransport.stdio` or `McpTransport.http`
+- `port`: HTTP port (default: 3000)
+- `address`: HTTP bind address (default: '127.0.0.1')
+- `generateJson`: Generate .mcp.json metadata (default: false)
+
+### @Tool
+Method annotation for exposing functions as MCP tools:
+- `description`: Tool description (optional, falls back to doc comments)
+
+### @Parameter (Optional)
+Parameter annotation for rich metadata:
+- `title`, `description`, `example`: Documentation
+- `minimum`, `maximum`, `pattern`, `enumValues`: Validation
+- `sensitive`: Mark sensitive data (default: false)
+
+Note: @Parameter is optional - generator extracts info from Dart types by default.
+
+## Generated Files
+
+- `.mcp.dart`: Complete MCP server implementation (stdio or HTTP)
+- `.mcp.json`: Tool metadata (only if `generateJson: true`)
+
+## Publishing Checklist
+
+1. Update version in pubspec.yaml
+2. Update CHANGELOG.md with new version entry
+3. Run `dart analyze` - no issues
+4. Run `pana .` - target 160/160
+5. Run `dart pub publish --dry-run` - no warnings
+6. Commit changes
+7. Publish: `dart pub publish --force`
+8. Push to GitHub
+
+## Security
+
+- Never expose internal error details in generated code
+- Use generic error messages: "An error occurred while processing the request"
+- Escape all special characters in generated strings
 
 ## Recent Changes
-- 001-mcp-annotations: Added Dart 3.9+ (null-safe)
-
-- 001-mcp-annotations: Added Dart 3.9+ (null-safe)
+- Added @Parameter annotation for rich parameter metadata (0.2.0)
+- Added HTTP transport configuration (port, address)
+- Made .mcp.json generation optional (generateJson parameter)
+- Fixed string escaping for regex patterns and special characters
+- Published easy_mcp_annotations 0.2.0 to pub.dev
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
