@@ -95,18 +95,36 @@ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion
   | dart run example/lib/src/user.mcp.dart
 ```
 
-Expected response (two JSON lines):
-```json
-{"jsonrpc":"2.0","result":{"protocolVersion":"2024-11-05","capabilities":{"tools":{"listChanged":true}},"serverInfo":{"name":"mcp-server","version":"1.0.0"},"instructions":"Auto-generated MCP server"},"id":1}
-{"jsonrpc":"2.0","result":{"tools":[{"name":"createUser","description":"Create a new user","inputSchema":{"type":"object","properties":{"name":{"type":"string"},"email":{"type":"string"}}}},{"name":"getUser","description":"Get user by ID","inputSchema":{"type":"object","properties":{"id":{"type":"integer"}},"required":["id"]}},{"name":"listUsers","description":"List all users","inputSchema":{"type":"object"}},{"name":"deleteUser","description":"Delete a user","inputSchema":{"type":"object","properties":{"id":{"type":"integer"}},"required":["id"]}},{"name":"searchUsers","description":"Search users by query","inputSchema":{"type":"object","properties":{"query":{"type":"string"}},"required":["query"]}}]},"id":2}
+**Test all tools (initialize, list tools, and call tools):**
+
+```bash
+dart run example/test_mcp.dart
 ```
 
-> **Note:** Tool calls (`tools/call`) require the server to stay alive while async handlers complete. For testing tool calls, use an MCP client like Claude Desktop, the `mcp` CLI, or run the server interactively:
->
-> ```bash
-> dart run example/lib/src/user.mcp.dart
-> # Then type JSON-RPC requests manually, one per line
-> ```
+This runs a full test session that verifies:
+- Server initialization
+- Tool listing (5 tools: `createUser`, `getUser`, `listUsers`, `deleteUser`, `searchUsers`)
+- `listUsers` - returns all users as JSON
+- `createUser` - creates a new user and returns it as JSON
+- `searchUsers` - searches and returns matching users as JSON
+
+Example tool call response (`listUsers`):
+```json
+{
+  "jsonrpc": "2.0",
+  "result": {
+    "content": [
+      {
+        "text": "[{\"id\":1,\"name\":\"Alice Smith\",\"email\":\"alice@example.com\"},{\"id\":2,\"name\":\"Bob Jones\",\"email\":\"bob@example.com\"},{\"id\":3,\"name\":\"Charlie Brown\",\"email\":\"charlie@example.com\"}]",
+        "type": "text"
+      }
+    ]
+  },
+  "id": 3
+}
+```
+
+> **Note:** Tool calls require the server to stay alive while async handlers complete. Simple pipe commands (`echo | dart run`) don't work for tool calls because stdin closes before the response is written. Use `test_mcp.dart` or an MCP client for full testing.
 
 ## Project Structure
 
