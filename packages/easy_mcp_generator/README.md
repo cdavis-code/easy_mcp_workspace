@@ -59,17 +59,52 @@ class MyServer {
 
 **Note:** Use `address: '0.0.0.0'` to listen on all network interfaces (useful for Docker containers or remote access).
 
-2. Add a `build.yaml` to your project:
+### Parameter Annotations (Optional)
 
-```yaml
-targets:
-  $default:
-    builders:
-      easy_mcp_generator|mcpBuilder:
-        enabled: true
+Use `@Parameter` to provide rich metadata for tool parameters:
+
+```dart
+@Mcp(transport: McpTransport.stdio)
+class MyServer {
+  @Tool(description: 'Create a new user')
+  Future<bool> createUser({
+    @Parameter(
+      title: 'Full Name',
+      description: 'The user\'s full name',
+      example: 'John Doe',
+    )
+    required String name,
+    
+    @Parameter(
+      title: 'Email Address',
+      description: 'A valid email address',
+      example: 'john@example.com',
+      pattern: r'^[\w\.-]+@[\w\.-]+\.\w+$',
+    )
+    required String email,
+    
+    @Parameter(
+      title: 'Age',
+      description: 'User age in years',
+      minimum: 0,
+      maximum: 150,
+      example: 25,
+    )
+    int? age,
+  }) async {
+    // Implementation here
+    return true;
+  }
+}
 ```
 
-3. Run the generator:
+The `@Parameter` annotation is **optional** - by default, the generator extracts parameter information from Dart types and method signatures. Use it when you need:
+- Human-readable titles and descriptions
+- Example values to guide users
+- Validation constraints (min/max, patterns, enum values)
+- To mark sensitive data (passwords, API keys)
+
+2. Run the generator:
 
 ```bash
 dart run build_runner build
@@ -77,7 +112,16 @@ dart run build_runner build
 
 This generates:
 - `my_server.mcp.dart` - Complete MCP server (stdio or HTTP)
-- `my_server.mcp.json` - Tool metadata with JSON-Schema definitions
+
+**Optional:** To also generate a `.mcp.json` metadata file, set `generateJson: true` in the `@Mcp` annotation:
+
+```dart
+@Mcp(
+  transport: McpTransport.stdio,
+  generateJson: true,  // Generates my_server.mcp.json
+)
+class MyServer { ... }
+```
 
 ## Features
 
@@ -85,6 +129,7 @@ This generates:
 - **Two transport modes** - stdio (JSON-RPC) and HTTP (Shelf-based) servers
 - **Configurable HTTP server** - Customize port and bind address via `@Mcp` annotation
 - **Automatic JSON-Schema generation** - Maps Dart types to proper JSON Schema
+- **Rich parameter metadata** - Use `@Parameter` annotation for titles, descriptions, validation
 - **Optional parameter support** - Handles named and optional positional parameters
 - **Doc comment extraction** - Uses function doc comments when `@Tool.description` not provided
 - **Dynamic method dispatch** - Generated `_dispatch` function routes to actual tool methods
