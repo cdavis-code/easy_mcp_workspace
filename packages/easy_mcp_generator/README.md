@@ -1,7 +1,7 @@
 # easy_mcp_generator
 
 <p align="center">
-  <img src="../../logo-icon.svg" width="80" height="80" alt="easy_mcp logo">
+  <img src="../../images/logo-banner.svg" width="400" alt="easy_mcp">
 </p>
 
 Build Runner generator that creates MCP server code from @tool annotations.

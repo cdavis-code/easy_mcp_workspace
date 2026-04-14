@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo-banner.svg" width="600" height="120" alt="easy_mcp">
+  <img src="images/logo-banner.svg" width="600" alt="easy_mcp">
 </p>
 
 <p align="center">

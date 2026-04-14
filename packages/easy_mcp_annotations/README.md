@@ -1,7 +1,7 @@
 # easy_mcp_annotations
 
 <p align="center">
-  <img src="../../logo-icon.svg" width="80" height="80" alt="easy_mcp logo">
+  <img src="../../images/logo-banner.svg" width="400" alt="easy_mcp">
 </p>
 
 Dart annotations for exposing library methods as MCP tools.
