@@ -66,7 +66,7 @@ class SchemaBuilder {
   }
 
   /// Builds a Schema.object() expression from a list of parameter maps.
-  /// Each param map has: 'name', 'type', 'schemaMap', 'isOptional'
+  /// Each param map has: 'name', 'type', 'schemaMap', 'isOptional', 'parameterMetadata'
   static String buildObjectSchema(List<Map<String, dynamic>> params) {
     if (params.isEmpty) {
       return 'Schema.object()';
@@ -76,11 +76,22 @@ class SchemaBuilder {
         .map((p) {
           final name = p['name'] as String;
           final schemaMap = p['schemaMap'] as Map<String, dynamic>?;
+          final metadata = p['parameterMetadata'] as Map<String, dynamic>?;
+          
+          String schemaCode;
           if (schemaMap != null) {
-            return "'$name': ${fromSchemaMap(schemaMap)}";
+            schemaCode = fromSchemaMap(schemaMap);
+          } else {
+            final type = p['type'] as String;
+            schemaCode = fromType(type);
           }
-          final type = p['type'] as String;
-          return "'$name': ${fromType(type)}";
+          
+          // Apply metadata enhancements if present
+          if (metadata != null && metadata.isNotEmpty) {
+            schemaCode = _applyMetadataToSchema(schemaCode, metadata);
+          }
+          
+          return "'$name': $schemaCode";
         })
         .join(',\n      ');
 
@@ -94,5 +105,84 @@ class SchemaBuilder {
     }
 
     return 'Schema.object(\n    properties: {\n      $properties,\n    },\n    required: [$required],\n  )';
+  }
+  
+  /// Applies @Parameter metadata to enhance a schema expression.
+  /// Adds title, description, examples, validation constraints, etc.
+  static String _applyMetadataToSchema(
+    String baseSchema,
+    Map<String, dynamic> metadata,
+  ) {
+    final buffer = StringBuffer();
+    
+    // Extract the schema type from baseSchema (e.g., "Schema.string()" -> "string")
+    final schemaTypeMatch = RegExp(r'Schema\.(\w+)\(\)').firstMatch(baseSchema);
+    final schemaType = schemaTypeMatch?.group(1) ?? 'string';
+    
+    // Build the schema with parameters
+    buffer.write('Schema.$schemaType(');
+    
+    final params = <String>[];
+    
+    // Add title if present
+    if (metadata['title'] != null) {
+      params.add("title: '${_escapeString(metadata['title'] as String)}'");
+    }
+    
+    // Add description if present
+    if (metadata['description'] != null) {
+      params.add("description: '${_escapeString(metadata['description'] as String)}'");
+    }
+    
+    // Add example if present
+    if (metadata['example'] != null) {
+      final example = metadata['example'];
+      if (example is String) {
+        params.add("examples: ['${_escapeString(example)}']");
+      } else {
+        params.add("examples: [$example]");
+      }
+    }
+    
+    // Add min/max for numeric types
+    if (metadata['minimum'] != null) {
+      params.add('min: ${metadata['minimum']}');
+    }
+    if (metadata['maximum'] != null) {
+      params.add('max: ${metadata['maximum']}');
+    }
+    
+    // Add pattern for string types
+    if (metadata['pattern'] != null) {
+      params.add("pattern: '${_escapeString(metadata['pattern'] as String)}'");
+    }
+    
+    // Add enum values if present
+    if (metadata['enumValues'] != null) {
+      final enumValues = metadata['enumValues'] as List;
+      final enumStr = enumValues.map((v) {
+        if (v is String) return "'${_escapeString(v)}'";
+        return v.toString();
+      }).join(', ');
+      params.add('enum: [$enumStr]');
+    }
+    
+    if (params.isNotEmpty) {
+      buffer.write('\n      ');
+      buffer.write(params.join(',\n      '));
+      buffer.write('\n    ');
+    }
+    
+    buffer.write(')');
+    
+    return buffer.toString();
+  }
+  
+  /// Escapes special characters in a string for use in generated Dart code.
+  static String _escapeString(String input) {
+    return input
+        .replaceAll("'", "\\'")
+        .replaceAll('\n', '\\n')
+        .replaceAll('\r', '\\r');
   }
 }

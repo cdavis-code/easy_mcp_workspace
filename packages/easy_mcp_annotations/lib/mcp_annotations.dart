@@ -138,3 +138,103 @@ class Tool {
   /// [execution] - Deprecated, will be implemented in a future version.
   const Tool({this.description, this.icons, this.execution});
 }
+
+/// Annotation to provide rich metadata for individual parameters in a Tool.
+///
+/// Use this annotation to customize how parameters are presented to MCP clients,
+/// including human-readable titles, descriptions, validation hints, and examples.
+///
+/// Example:
+/// ```dart
+/// @Tool(description: 'Create a new user')
+/// Future<User> createUser({
+///   @Parameter(
+///     title: 'Full Name',
+///     description: 'The user\'s complete name including first and last name',
+///     example: 'John Doe',
+///   )
+///   required String name,
+///
+///   @Parameter(
+///     title: 'Email Address',
+///     description: 'A valid email address for the user',
+///     example: 'john.doe@example.com',
+///   )
+///   required String email,
+///
+///   @Parameter(
+///     title: 'Age',
+///     description: 'User age in years',
+///     minimum: 0,
+///     maximum: 150,
+///     example: 25,
+///   )
+///   int? age,
+/// }) async { ... }
+/// ```
+class Parameter {
+  /// Human-readable title for this parameter.
+  ///
+  /// Displayed as the label in MCP clients. If not provided,
+  /// the parameter name will be used.
+  final String? title;
+
+  /// Detailed description of what this parameter represents.
+  ///
+  /// Provides context to help users understand what value to provide.
+  /// If not provided, the generator will look for dartdoc on the parameter.
+  final String? description;
+
+  /// Example value for this parameter.
+  ///
+  /// Shown to users as a hint for the expected format or value.
+  /// Helps LLMs understand the expected input format.
+  final Object? example;
+
+  /// Minimum value for numeric parameters.
+  ///
+  /// Used for validation of int and double types.
+  final num? minimum;
+
+  /// Maximum value for numeric parameters.
+  ///
+  /// Used for validation of int and double types.
+  final num? maximum;
+
+  /// Regular expression pattern for string validation.
+  ///
+  /// When provided, the parameter value must match this pattern.
+  final String? pattern;
+
+  /// Whether this parameter should be marked as sensitive.
+  ///
+  /// Sensitive parameters (like passwords, API keys) may be masked
+  /// in logs and UI by MCP clients.
+  final bool sensitive;
+
+  /// Allowed values for enum-like parameters.
+  ///
+  /// When specified, restricts the parameter to these specific values.
+  final List<Object?>? enumValues;
+
+  /// Creates a Parameter annotation.
+  ///
+  /// [title] - Human-readable title displayed in MCP clients.
+  /// [description] - Detailed explanation of the parameter's purpose.
+  /// [example] - Example value to guide users.
+  /// [minimum] - Minimum allowed value for numeric types.
+  /// [maximum] - Maximum allowed value for numeric types.
+  /// [pattern] - Regular expression pattern for string validation.
+  /// [sensitive] - Whether this parameter contains sensitive data.
+  /// [enumValues] - List of allowed values for enum-like parameters.
+  const Parameter({
+    this.title,
+    this.description,
+    this.example,
+    this.minimum,
+    this.maximum,
+    this.pattern,
+    this.sensitive = false,
+    this.enumValues,
+  });
+}

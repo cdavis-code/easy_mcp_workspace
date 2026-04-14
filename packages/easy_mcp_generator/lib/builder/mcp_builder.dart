@@ -244,6 +244,9 @@ class McpBuilder extends Builder {
     ExecutableElement element,
   ) {
     final params = <Map<String, dynamic>>[];
+    const parameterChecker = TypeChecker.fromUrl(
+      'package:easy_mcp_annotations/mcp_annotations.dart#Parameter',
+    );
 
     for (final param in element.formalParameters) {
       final typeString = _getTypeString(param.type);
@@ -258,6 +261,12 @@ class McpBuilder extends Builder {
         param.type,
       );
 
+      // Extract @Parameter annotation metadata if present
+      final parameterMetadata = _extractParameterMetadata(
+        param,
+        parameterChecker,
+      );
+
       params.add(<String, dynamic>{
         'name': param.name,
         'type': typeString,
@@ -266,10 +275,83 @@ class McpBuilder extends Builder {
         'isOptional': isOptional,
         'isNamed': isNamedParam,
         'listInnerTypeImport': listInnerTypeImport,
+        'parameterMetadata': parameterMetadata,
       });
     }
 
     return params;
+  }
+
+  /// Extracts metadata from a @Parameter annotation on a parameter.
+  Map<String, dynamic>? _extractParameterMetadata(
+    FormalParameterElement param,
+    TypeChecker parameterChecker,
+  ) {
+    final annotation = parameterChecker.firstAnnotationOf(param);
+    if (annotation == null) return null;
+
+    final reader = ConstantReader(annotation);
+    final metadata = <String, dynamic>{};
+
+    // Extract title
+    if (reader.read('title').isString) {
+      metadata['title'] = reader.read('title').stringValue;
+    }
+
+    // Extract description
+    if (reader.read('description').isString) {
+      metadata['description'] = reader.read('description').stringValue;
+    }
+
+    // Extract example
+    if (reader.read('example').isString) {
+      metadata['example'] = reader.read('example').stringValue;
+    } else if (reader.read('example').isInt) {
+      metadata['example'] = reader.read('example').intValue;
+    } else if (reader.read('example').isDouble) {
+      metadata['example'] = reader.read('example').doubleValue;
+    } else if (reader.read('example').isBool) {
+      metadata['example'] = reader.read('example').boolValue;
+    }
+
+    // Extract minimum
+    if (reader.read('minimum').isInt) {
+      metadata['minimum'] = reader.read('minimum').intValue;
+    } else if (reader.read('minimum').isDouble) {
+      metadata['minimum'] = reader.read('minimum').doubleValue;
+    }
+
+    // Extract maximum
+    if (reader.read('maximum').isInt) {
+      metadata['maximum'] = reader.read('maximum').intValue;
+    } else if (reader.read('maximum').isDouble) {
+      metadata['maximum'] = reader.read('maximum').doubleValue;
+    }
+
+    // Extract pattern
+    if (reader.read('pattern').isString) {
+      metadata['pattern'] = reader.read('pattern').stringValue;
+    }
+
+    // Extract sensitive
+    if (reader.read('sensitive').isBool) {
+      metadata['sensitive'] = reader.read('sensitive').boolValue;
+    }
+
+    // Extract enumValues
+    if (reader.read('enumValues').isList) {
+      final enumList = reader.read('enumValues').listValue;
+      metadata['enumValues'] = enumList.map((v) {
+        final valueReader = ConstantReader(v);
+        if (valueReader.isString) return valueReader.stringValue;
+        if (valueReader.isInt) return valueReader.intValue;
+        if (valueReader.isDouble) return valueReader.doubleValue;
+        if (valueReader.isBool) return valueReader.boolValue;
+        return v.toString();
+      }).toList();
+    }
+
+    return metadata.isEmpty ? null : metadata;
   }
 
   /// Extracts the import URI for the inner type of a `List<T>` if T is a custom type.
