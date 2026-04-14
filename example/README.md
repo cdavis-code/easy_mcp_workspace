@@ -77,9 +77,26 @@ class UserStore {
 }
 ```
 
-#### Parameter Annotations
+#### Parameter Annotations (Optional)
 
-Use `@Parameter` to provide rich metadata for individual parameters:
+The `@Parameter` annotation is **optional** and only needed when you want to provide additional metadata for parameters. By default, the generator extracts parameter information from Dart types and doc comments.
+
+Use `@Parameter` when you need:
+- Human-readable titles and descriptions
+- Example values to guide users
+- Validation constraints (min/max, patterns, enum values)
+- To mark sensitive data (passwords, API keys)
+
+**Without `@Parameter` (simpler approach):**
+```dart
+@Tool(description: 'Create a new user')
+static Future<User> createUser({
+  required String name,
+  required String email,
+}) async { ... }
+```
+
+**With `@Parameter` (rich metadata):**
 
 ```dart
 @Tool(description: 'Create a new item')

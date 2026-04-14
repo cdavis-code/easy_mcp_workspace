@@ -68,7 +68,9 @@ class MyServer {
 | `address` | `String` | `'127.0.0.1'` | HTTP bind address (only for HTTP transport). Use `'0.0.0.0'` to listen on all interfaces |
 | `generateJson` | `bool` | `false` | Whether to generate `.mcp.json` metadata file |
 
-### Parameter Annotations
+### Parameter Annotations (Optional)
+
+The `@Parameter` annotation is **optional**. By default, the generator automatically extracts parameter information from Dart types and method signatures. You only need `@Parameter` when you want to provide additional metadata beyond what's available from the code itself.
 
 Use `@Parameter` to provide rich metadata for individual tool parameters:
 
