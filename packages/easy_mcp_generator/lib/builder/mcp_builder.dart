@@ -294,53 +294,67 @@ class McpBuilder extends Builder {
     final metadata = <String, dynamic>{};
 
     // Extract title
-    if (reader.read('title').isString) {
-      metadata['title'] = reader.read('title').stringValue;
+    final title = reader.peek('title');
+    if (title != null && !title.isNull && title.isString) {
+      metadata['title'] = title.stringValue;
     }
 
     // Extract description
-    if (reader.read('description').isString) {
-      metadata['description'] = reader.read('description').stringValue;
+    final description = reader.peek('description');
+    if (description != null && !description.isNull && description.isString) {
+      metadata['description'] = description.stringValue;
     }
 
     // Extract example
-    if (reader.read('example').isString) {
-      metadata['example'] = reader.read('example').stringValue;
-    } else if (reader.read('example').isInt) {
-      metadata['example'] = reader.read('example').intValue;
-    } else if (reader.read('example').isDouble) {
-      metadata['example'] = reader.read('example').doubleValue;
-    } else if (reader.read('example').isBool) {
-      metadata['example'] = reader.read('example').boolValue;
+    final example = reader.peek('example');
+    if (example != null && !example.isNull) {
+      if (example.isString) {
+        metadata['example'] = example.stringValue;
+      } else if (example.isInt) {
+        metadata['example'] = example.intValue;
+      } else if (example.isDouble) {
+        metadata['example'] = example.doubleValue;
+      } else if (example.isBool) {
+        metadata['example'] = example.boolValue;
+      }
     }
 
     // Extract minimum
-    if (reader.read('minimum').isInt) {
-      metadata['minimum'] = reader.read('minimum').intValue;
-    } else if (reader.read('minimum').isDouble) {
-      metadata['minimum'] = reader.read('minimum').doubleValue;
+    final minimum = reader.peek('minimum');
+    if (minimum != null && !minimum.isNull) {
+      if (minimum.isInt) {
+        metadata['minimum'] = minimum.intValue;
+      } else if (minimum.isDouble) {
+        metadata['minimum'] = minimum.doubleValue;
+      }
     }
 
     // Extract maximum
-    if (reader.read('maximum').isInt) {
-      metadata['maximum'] = reader.read('maximum').intValue;
-    } else if (reader.read('maximum').isDouble) {
-      metadata['maximum'] = reader.read('maximum').doubleValue;
+    final maximum = reader.peek('maximum');
+    if (maximum != null && !maximum.isNull) {
+      if (maximum.isInt) {
+        metadata['maximum'] = maximum.intValue;
+      } else if (maximum.isDouble) {
+        metadata['maximum'] = maximum.doubleValue;
+      }
     }
 
     // Extract pattern
-    if (reader.read('pattern').isString) {
-      metadata['pattern'] = reader.read('pattern').stringValue;
+    final pattern = reader.peek('pattern');
+    if (pattern != null && !pattern.isNull && pattern.isString) {
+      metadata['pattern'] = pattern.stringValue;
     }
 
     // Extract sensitive
-    if (reader.read('sensitive').isBool) {
-      metadata['sensitive'] = reader.read('sensitive').boolValue;
+    final sensitive = reader.peek('sensitive');
+    if (sensitive != null && !sensitive.isNull && sensitive.isBool) {
+      metadata['sensitive'] = sensitive.boolValue;
     }
 
     // Extract enumValues
-    if (reader.read('enumValues').isList) {
-      final enumList = reader.read('enumValues').listValue;
+    final enumValues = reader.peek('enumValues');
+    if (enumValues != null && !enumValues.isNull && enumValues.isList) {
+      final enumList = enumValues.listValue;
       metadata['enumValues'] = enumList.map((v) {
         final valueReader = ConstantReader(v);
         if (valueReader.isString) return valueReader.stringValue;
