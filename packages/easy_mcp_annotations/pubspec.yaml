@@ -1,6 +1,6 @@
 name: easy_mcp_annotations
 description: Dart annotations for exposing library methods as MCP tools.
-version: 0.1.3
+version: 0.2.0
 homepage: https://github.com/cdavis-code/easy_mcp_workspace
 repository: https://github.com/cdavis-code/easy_mcp_workspace
 issue_tracker: https://github.com/cdavis-code/easy_mcp_workspace/issues

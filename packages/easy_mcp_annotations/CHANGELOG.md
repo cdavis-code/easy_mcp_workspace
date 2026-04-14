@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-14
+
+### Added
+- Added `@Parameter` annotation for rich parameter metadata
+  - Support for `title`, `description`, `example` fields
+  - Support for validation constraints: `minimum`, `maximum`, `pattern`, `enumValues`
+  - Support for `sensitive` flag to mark sensitive data
+- Updated documentation with `@Parameter` usage examples
+- Clarified that `@Parameter` annotation is optional
+
 ## [0.1.3] - 2026-04-14
 
 ### Added
