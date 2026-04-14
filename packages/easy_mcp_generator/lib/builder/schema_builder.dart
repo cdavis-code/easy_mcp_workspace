@@ -116,8 +116,9 @@ class SchemaBuilder {
   ) {
     // Only support augmenting simple primitive schemas for now
     // Complex schemas (objects, lists with arguments) are returned unchanged
-    final match = RegExp(r'^Schema\.(string|int|number|bool)\(\)$')
-        .firstMatch(baseSchema.trim());
+    final match = RegExp(
+      r'^Schema\.(string|int|number|bool)\(\)$',
+    ).firstMatch(baseSchema.trim());
     if (match == null) {
       // Complex schemas keep their original structure
       return baseSchema;
@@ -141,15 +142,9 @@ class SchemaBuilder {
       );
     }
 
-    // Add example if present
-    if (metadata['example'] != null) {
-      final example = metadata['example'];
-      if (example is String) {
-        params.add("examples: ['${_escapeString(example)}']");
-      } else {
-        params.add('examples: [$example]');
-      }
-    }
+    // Note: 'example' from @Parameter is not passed to Schema constructors
+    // as dart_mcp Schema classes don't support the 'example' parameter.
+    // Examples are available in the generated .mcp.json metadata file instead.
 
     // Add min/max for numeric types
     if (metadata['minimum'] != null) {
@@ -187,12 +182,13 @@ class SchemaBuilder {
   }
 
   /// Escapes special characters in a string for use in generated Dart code.
-  /// Handles backslashes, single quotes, and newlines.
+  /// Handles backslashes, single quotes, newlines, and dollar signs (for string interpolation).
   static String _escapeString(String input) {
     return input
         .replaceAll('\\', '\\\\')
         .replaceAll("'", "\\'")
         .replaceAll('\n', '\\n')
-        .replaceAll('\r', '\\r');
+        .replaceAll('\r', '\\r')
+        .replaceAll('\$', '\\\$');
   }
 }
