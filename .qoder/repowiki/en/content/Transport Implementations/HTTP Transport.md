@@ -10,10 +10,19 @@
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart)
 - [packages/easy_mcp_generator/test/templates_test.dart](file://packages/easy_mcp_generator/test/templates_test.dart)
 - [example/bin/example.mcp.dart](file://example/bin/example.mcp.dart)
+- [example/bin/example.dart](file://example/bin/example.dart)
 - [example/lib/src/user_store.dart](file://example/lib/src/user_store.dart)
 - [example/lib/src/todo_store.dart](file://example/lib/src/todo_store.dart)
 - [example/pubspec.yaml](file://example/pubspec.yaml)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated Core Components section to reflect dynamic port configuration and address binding capabilities
+- Enhanced Port Configuration and Loopback Binding section with new dynamic configuration features
+- Added sophisticated transport detection mechanisms for HTTP vs stdio transport selection
+- Updated Server Lifecycle Management to include proper cleanup procedures
+- Enhanced Practical Examples with dynamic configuration scenarios
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -29,32 +38,33 @@
 11. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the HTTP transport implementation for Easy MCP’s web-based communication system. It covers how the Shelf framework integrates with the MCP server to enable HTTP-based tool invocation, the bidirectional streaming architecture using StreamController and StreamChannel, port configuration and loopback binding, server lifecycle management, template generation for HTTP endpoints, response buffering with completer queues, and practical guidance for testing, monitoring, error handling, and performance optimization.
+This document explains the HTTP transport implementation for Easy MCP's web-based communication system. It covers how the Shelf framework integrates with the MCP server to enable HTTP-based tool invocation, the bidirectional streaming architecture using StreamController and StreamChannel, dynamic port configuration and address binding, server lifecycle management, template generation for HTTP endpoints, response buffering with completer queues, and practical guidance for testing, monitoring, error handling, and performance optimization.
 
 ## Project Structure
 The repository provides:
-- Annotations and generator for building HTTP or stdio MCP servers
-- Example application demonstrating HTTP transport usage
-- Tests validating the generated HTTP server template
+- Annotations and generator for building HTTP or stdio MCP servers with dynamic configuration
+- Example application demonstrating HTTP transport usage with configurable port and address
+- Tests validating the generated HTTP server template with dynamic settings
 
 ```mermaid
 graph TB
 subgraph "Annotations"
-A["mcp_annotations.dart"]
+A["mcp_annotations.dart<br/>Dynamic transport & config"]
 end
 subgraph "Generator"
-B["mcp_builder.dart"]
-C["templates.dart"]
+B["mcp_builder.dart<br/>Sophisticated transport detection"]
+C["templates.dart<br/>Dynamic port/address templates"]
 D["schema_builder.dart"]
 end
 subgraph "Example"
-E["example.mcp.dart"]
+E["example.mcp.dart<br/>Generated HTTP server"]
 F["user_store.dart"]
 G["todo_store.dart"]
+H["example.dart<br/>@Mcp transport config"]
 end
 subgraph "Docs"
-H["README.md"]
-I["example/pubspec.yaml"]
+I["README.md"]
+J["example/pubspec.yaml"]
 end
 A --> B
 B --> C
@@ -62,15 +72,17 @@ C --> E
 D --> C
 F --> E
 G --> E
-H --> I
+H --> E
+I --> J
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L107)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-567](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L567)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:268-486](file://packages/easy_mcp_generator/lib/builder/templates.dart#L268-L486)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L141)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L738)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:282-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L282-L630)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
-- [example/bin/example.mcp.dart:1-68](file://example/bin/example.mcp.dart#L1-L68)
+- [example/bin/example.mcp.dart:1-490](file://example/bin/example.mcp.dart#L1-L490)
+- [example/bin/example.dart:6](file://example/bin/example.dart#L6)
 - [example/lib/src/user_store.dart:1-144](file://example/lib/src/user_store.dart#L1-L144)
 - [example/lib/src/todo_store.dart:1-236](file://example/lib/src/todo_store.dart#L1-L236)
 - [README.md:1-120](file://README.md#L1-L120)
@@ -81,24 +93,27 @@ H --> I
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
 
 ## Core Components
-- Annotations define transport mode selection (HTTP vs stdio) and tool metadata.
-- The generator builds HTTP server code using a Shelf handler and a StreamChannel bridge to the MCP server.
-- The example demonstrates a working HTTP server bound to the loopback interface on a fixed port.
+- Annotations define transport mode selection (HTTP vs stdio) and dynamic configuration including port and address settings.
+- The generator performs sophisticated transport detection and extracts configuration parameters from annotations.
+- The HttpTemplate generates Shelf-based HTTP servers with dynamic port and address binding.
+- The example demonstrates HTTP transport with configurable port (8080) and address ('0.0.0.0').
 
 Key responsibilities:
-- McpTransport enum selects HTTP transport.
-- McpBuilder reads annotations and emits HTTP or stdio server code.
-- HttpTemplate generates the Shelf-based HTTP server, StreamChannel wiring, and response buffering.
-- Example server binds to loopback IPv4 and prints the effective port.
+- McpTransport enum selects HTTP transport with dynamic configuration support.
+- McpBuilder performs transport detection and extracts port/address from annotations.
+- HttpTemplate generates dynamic server code with configurable port and address binding.
+- Example server demonstrates HTTP transport with custom port and address configuration.
+
+**Updated** Enhanced transport detection and dynamic configuration capabilities
 
 **Section sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:9-19](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L9-L19)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:18-52](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L18-L52)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:268-486](file://packages/easy_mcp_generator/lib/builder/templates.dart#L268-L486)
-- [example/bin/example.mcp.dart:55-61](file://example/bin/example.mcp.dart#L55-L61)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:9-90](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L9-L90)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:559-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L559-L734)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:303-537](file://packages/easy_mcp_generator/lib/builder/templates.dart#L303-L537)
+- [example/bin/example.dart:6](file://example/bin/example.dart#L6)
 
 ## Architecture Overview
-The HTTP transport architecture connects incoming HTTP requests to the MCP server via a bidirectional stream. The Shelf handler validates the request, forwards the payload to the MCP server through a StreamChannel, and returns the serialized response.
+The HTTP transport architecture connects incoming HTTP requests to the MCP server via a bidirectional stream with dynamic configuration support. The Shelf handler validates the request, forwards the payload to the MCP server through a StreamChannel, and returns the serialized response.
 
 ```mermaid
 graph TB
@@ -109,7 +124,10 @@ SC2["serverToClient<br/>StreamController<String>.broadcast"]
 Channel["StreamChannel<String>"]
 MCP["MCPServerWithTools"]
 Queue["Response Queue<br/>List<Completer<String>>"]
+Config["Dynamic Config<br/>Port & Address"]
 Client --> Shelf
+Shelf --> Config
+Config --> Shelf
 Shelf --> SC1
 SC1 --> Channel
 Channel --> MCP
@@ -120,10 +138,41 @@ Queue --> Shelf
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:398-449](file://packages/easy_mcp_generator/lib/builder/templates.dart#L398-L449)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:471-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L471-L501)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
 - [example/bin/example.mcp.dart:17-67](file://example/bin/example.mcp.dart#L17-L67)
 
 ## Detailed Component Analysis
+
+### Sophisticated Transport Detection and Dynamic Configuration
+- The generator performs comprehensive transport detection across top-level functions, classes, and methods.
+- Dynamic configuration extraction supports port and address parameters for HTTP transport.
+- Transport detection prioritizes explicit annotation values over defaults.
+- The system handles both enum-based and index-based transport specification.
+
+```mermaid
+sequenceDiagram
+participant Annotation as "@Mcp Annotation"
+participant Builder as "McpBuilder"
+participant Transport as "Transport Detection"
+participant Config as "Configuration Extraction"
+Annotation->>Builder : "transport, port, address"
+Builder->>Transport : "_findTransport()"
+Transport->>Transport : "Check top-level, classes, methods"
+Transport-->>Builder : "transport type"
+Builder->>Config : "_findPort(), _findAddress()"
+Config->>Config : "Extract numeric port & string address"
+Config-->>Builder : "port & address values"
+Builder-->>Builder : "Generate HttpTemplate with config"
+```
+
+**Diagram sources**
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:559-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L559-L734)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:54-89](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L89)
+
+**Section sources**
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:559-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L559-L734)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:54-89](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L89)
 
 ### Shelf Integration and Request Routing
 - The generated server defines a Shelf route handler that accepts only POST requests.
@@ -147,18 +196,18 @@ Shelf-->>Client : "200 OK JSON response"
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:419-434](file://packages/easy_mcp_generator/lib/builder/templates.dart#L419-L434)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:471-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L471-L501)
 - [example/bin/example.mcp.dart:38-53](file://example/bin/example.mcp.dart#L38-L53)
 
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:419-434](file://packages/easy_mcp_generator/lib/builder/templates.dart#L419-L434)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:471-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L471-L501)
 - [example/bin/example.mcp.dart:38-53](file://example/bin/example.mcp.dart#L38-L53)
 
 ### Bidirectional Streaming with StreamController and StreamChannel
 - Two StreamControllers manage directions:
   - clientToServer: receives HTTP request bodies and forwards to MCP.
   - serverToClient: broadcasts MCP responses back to the HTTP handler.
-- StreamChannel connects these streams to the MCP server’s expected channel interface.
+- StreamChannel connects these streams to the MCP server's expected channel interface.
 - The MCP server registers tools and serializes results for transport.
 
 ```mermaid
@@ -180,48 +229,55 @@ StreamChannel_T_ --> MCPServerWithTools : "provides channel"
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:399-407](file://packages/easy_mcp_generator/lib/builder/templates.dart#L399-L407)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:451-461](file://packages/easy_mcp_generator/lib/builder/templates.dart#L451-L461)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:503-513](file://packages/easy_mcp_generator/lib/builder/templates.dart#L503-L513)
 - [example/bin/example.mcp.dart:18-26](file://example/bin/example.mcp.dart#L18-L26)
 
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:399-407](file://packages/easy_mcp_generator/lib/builder/templates.dart#L399-L407)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:451-461](file://packages/easy_mcp_generator/lib/builder/templates.dart#L451-L461)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:503-513](file://packages/easy_mcp_generator/lib/builder/templates.dart#L503-L513)
 - [example/bin/example.mcp.dart:18-26](file://example/bin/example.mcp.dart#L18-L26)
 
-### Port Configuration and Loopback Binding
-- The generated HTTP server binds to the loopback IPv4 address and a configured port.
-- The example server uses a fixed port value in the generated code.
-- The builder chooses the HTTP template when transport is set to HTTP.
+### Dynamic Port Configuration and Address Binding
+- The generated HTTP server supports dynamic port configuration extracted from @Mcp annotations.
+- Address binding supports both loopback interface ('127.0.0.1') and external interfaces ('0.0.0.0').
+- The builder extracts port and address values from annotations with fallback to defaults.
+- Conditional imports optimize imports based on address type (uses dart:io for loopback, string literals for custom addresses).
 
 ```mermaid
 flowchart TD
-Start(["Server Startup"]) --> Bind["Bind to loopback IPv4"]
-Bind --> Port["Use configured port"]
-Port --> Listen["Listen for requests"]
+Start(["Server Startup"]) --> Detect["Detect Transport & Config"]
+Detect --> Port["Extract Port (default: 3000)"]
+Detect --> Address["Extract Address (default: '127.0.0.1')"]
+Port --> Bind["Bind to Address"]
+Address --> Bind
+Bind --> Listen["Listen for requests on Port"]
 Listen --> Done(["Server Running"])
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:36-38](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L36-L38)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:436-440](file://packages/easy_mcp_generator/lib/builder/templates.dart#L436-L440)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:322-325](file://packages/easy_mcp_generator/lib/builder/templates.dart#L322-L325)
 - [example/bin/example.mcp.dart:55-59](file://example/bin/example.mcp.dart#L55-L59)
 
+**Updated** Enhanced with dynamic configuration extraction and conditional imports
+
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:36-38](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L36-L38)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:436-440](file://packages/easy_mcp_generator/lib/builder/templates.dart#L436-L440)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:322-325](file://packages/easy_mcp_generator/lib/builder/templates.dart#L322-L325)
 - [example/bin/example.mcp.dart:55-59](file://example/bin/example.mcp.dart#L55-L59)
 
 ### Server Lifecycle Management
-- The server starts the Shelf HTTP server, waits for the MCP server to complete, and closes resources cleanly.
+- The server starts the Shelf HTTP server with dynamic configuration, waits for the MCP server to complete, and closes resources cleanly.
 - Streams and controllers are closed after the MCP server finishes.
+- Proper cleanup ensures graceful shutdown and resource deallocation.
 
 ```mermaid
 flowchart TD
 A["Start main()"] --> B["Create StreamControllers"]
 B --> C["Create StreamChannel"]
 C --> D["Start MCPServerWithTools"]
-D --> E["Start Shelf server"]
+D --> E["Start Shelf server with dynamic config"]
 E --> F{"MCP done?"}
 F --> |No| E
 F --> |Yes| G["Close Shelf server"]
@@ -229,41 +285,45 @@ G --> H["Close StreamControllers"]
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:398-449](file://packages/easy_mcp_generator/lib/builder/templates.dart#L398-L449)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:450-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L450-L501)
 - [example/bin/example.mcp.dart:63-67](file://example/bin/example.mcp.dart#L63-L67)
 
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:398-449](file://packages/easy_mcp_generator/lib/builder/templates.dart#L398-L449)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:450-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L450-L501)
 - [example/bin/example.mcp.dart:63-67](file://example/bin/example.mcp.dart#L63-L67)
 
 ### Template Generation Process
 - The generator extracts tool definitions and metadata from annotated libraries.
 - It emits an HTTP server template that includes:
-  - Imports for Shelf and StreamChannel
+  - Imports for Shelf and StreamChannel with conditional dart:io imports
   - StreamControllers and StreamChannel construction
   - Response buffering via a queue of Completers
   - Tool registration and handlers
-  - Server startup and lifecycle cleanup
+  - Server startup with dynamic port and address configuration
+  - Server lifecycle cleanup
 
 ```mermaid
 sequenceDiagram
 participant Builder as "McpBuilder"
 participant Extract as "_extractAllTools()"
 participant Template as "HttpTemplate.generate()"
+participant Config as "Dynamic Config"
 participant Output as ".mcp.dart"
 Builder->>Extract : "scan for @Tool annotations"
 Extract-->>Builder : "tools metadata"
-Builder->>Template : "generate(tools, port)"
+Builder->>Config : "extract port & address"
+Config-->>Builder : "dynamic configuration"
+Builder->>Template : "generate(tools, port, address)"
 Template-->>Output : "write generated HTTP server"
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:18-52](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L18-L52)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:268-486](file://packages/easy_mcp_generator/lib/builder/templates.dart#L268-L486)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:559-624](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L559-L624)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:303-537](file://packages/easy_mcp_generator/lib/builder/templates.dart#L303-L537)
 
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:18-52](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L18-L52)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:268-486](file://packages/easy_mcp_generator/lib/builder/templates.dart#L268-L486)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:559-624](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L559-L624)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:303-537](file://packages/easy_mcp_generator/lib/builder/templates.dart#L303-L537)
 
 ### Response Buffering Mechanism
 - A queue of Completers ensures that responses from the MCP server match the correct request.
@@ -280,11 +340,11 @@ Complete --> Reply["Return HTTP Response"]
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:411-417](file://packages/easy_mcp_generator/lib/builder/templates.dart#L411-L417)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:464-469](file://packages/easy_mcp_generator/lib/builder/templates.dart#L464-L469)
 - [example/bin/example.mcp.dart:30-36](file://example/bin/example.mcp.dart#L30-L36)
 
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:411-417](file://packages/easy_mcp_generator/lib/builder/templates.dart#L411-L417)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:464-469](file://packages/easy_mcp_generator/lib/builder/templates.dart#L464-L469)
 - [example/bin/example.mcp.dart:30-36](file://example/bin/example.mcp.dart#L30-L36)
 
 ### Tool Registration and Serialization
@@ -307,15 +367,16 @@ SchemaBuilder --> MCPServerWithTools : "builds input schemas"
 
 **Diagram sources**
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:451-484](file://packages/easy_mcp_generator/lib/builder/templates.dart#L451-L484)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:503-536](file://packages/easy_mcp_generator/lib/builder/templates.dart#L503-L536)
 
 **Section sources**
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:451-484](file://packages/easy_mcp_generator/lib/builder/templates.dart#L451-L484)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:503-536](file://packages/easy_mcp_generator/lib/builder/templates.dart#L503-L536)
 
 ## Dependency Analysis
 - The example depends on Shelf and StreamChannel to implement HTTP transport and bidirectional streaming.
 - The generator depends on the annotations package and uses dart_mcp for server scaffolding.
+- Dynamic configuration requires proper import handling based on address type.
 
 ```mermaid
 graph LR
@@ -327,57 +388,61 @@ Example --> StreamChannel["stream_channel"]
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-107](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L107)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-567](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L567)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:268-486](file://packages/easy_mcp_generator/lib/builder/templates.dart#L268-L486)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L141)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L738)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:282-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L282-L630)
 - [example/pubspec.yaml:11-22](file://example/pubspec.yaml#L11-L22)
 
 **Section sources**
 - [example/pubspec.yaml:11-22](file://example/pubspec.yaml#L11-L22)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:18-52](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L18-L52)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:559-624](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L559-L624)
 
 ## Performance Considerations
 - Request handling is synchronous per request; ensure the MCP server remains responsive.
 - Avoid blocking operations inside tool handlers to prevent queue backlog.
 - Consider connection pooling and concurrency limits at the HTTP layer if scaling horizontally.
 - Monitor queue depth and completion latency to detect backpressure.
-
-[No sources needed since this section provides general guidance]
+- Dynamic configuration adds minimal overhead during server startup.
 
 ## Troubleshooting Guide
 Common issues and remedies:
 - Method not allowed: Ensure clients send POST requests to the HTTP endpoint.
-- Port conflicts: Change the port in the generated code and rebuild.
-- Loopback binding: Confirm the server binds to loopback; adjust address if exposing externally.
+- Port conflicts: Change the port in the @Mcp annotation and rebuild.
+- Address binding: Verify the server binds to the correct address; adjust address parameter if exposing externally.
 - Resource cleanup: Verify server lifecycle closes streams and the HTTP server gracefully.
+- Transport detection: Ensure @Mcp annotation is properly placed on top-level functions, classes, or methods.
 
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:420-422](file://packages/easy_mcp_generator/lib/builder/templates.dart#L420-L422)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:436-440](file://packages/easy_mcp_generator/lib/builder/templates.dart#L436-L440)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:445-449](file://packages/easy_mcp_generator/lib/builder/templates.dart#L445-L449)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:472-474](file://packages/easy_mcp_generator/lib/builder/templates.dart#L472-L474)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:496-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L496-L501)
 
 ## Security Considerations
 - CORS: The generated template does not include CORS headers; add appropriate headers if serving from browsers.
 - Authentication: No built-in authentication; integrate middleware or reverse proxy authentication as needed.
 - HTTPS: The template binds to loopback and does not enable TLS; deploy behind a reverse proxy for TLS termination.
-- Network exposure: The example binds to loopback; for external access, bind to a specific interface and secure the deployment boundary.
-
-[No sources needed since this section provides general guidance]
+- Network exposure: The example demonstrates binding to '0.0.0.0' for external access; use '127.0.0.1' for local-only access.
+- Dynamic configuration: Validate configuration inputs to prevent unexpected address/port combinations.
 
 ## Practical Examples
-- HTTP server startup:
-  - Run the generated server binary to start the Shelf HTTP server on the configured port.
+- HTTP server startup with dynamic configuration:
+  - Use @Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0') to configure server binding.
+  - Run the generated server binary to start the Shelf HTTP server with custom port and address.
   - The server prints the effective port after binding.
 - Endpoint testing:
   - Send a POST request to the HTTP endpoint with a JSON payload compatible with the MCP server.
   - Expect a JSON response; verify non-POST requests receive an appropriate error status.
 - Integration with web clients:
-  - Configure the client to target the server’s loopback address and port.
+  - Configure the client to target the server's configured address and port.
   - For browser clients, ensure CORS headers are set or serve via a trusted origin.
+- Transport detection scenarios:
+  - Test different placement of @Mcp annotation (top-level function, class, method).
+  - Verify that configuration extraction works regardless of annotation location.
 
 **Section sources**
-- [example/bin/example.mcp.dart:55-61](file://example/bin/example.mcp.dart#L55-L61)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:419-434](file://packages/easy_mcp_generator/lib/builder/templates.dart#L419-L434)
+- [example/bin/example.dart:6](file://example/bin/example.dart#L6)
+- [example/bin/example.mcp.dart:55-59](file://example/bin/example.mcp.dart#L55-L59)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:471-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L471-L501)
 
 ## Conclusion
-The Easy MCP HTTP transport leverages Shelf for request handling, StreamChannel for bidirectional streaming, and a completer-queue mechanism to synchronize responses. The generator automates server creation from annotated tool definitions, enabling quick prototyping and integration. For production, consider CORS, authentication, and HTTPS via a reverse proxy, and monitor performance to maintain responsiveness under load.
+The Easy MCP HTTP transport leverages Shelf for request handling, StreamChannel for bidirectional streaming, and a completer-queue mechanism to synchronize responses. The generator automates server creation from annotated tool definitions with sophisticated transport detection and dynamic configuration extraction. The system now supports flexible port and address configuration, enabling deployment in various environments from local development to production deployments. For production, consider CORS, authentication, and HTTPS via a reverse proxy, and monitor performance to maintain responsiveness under load.

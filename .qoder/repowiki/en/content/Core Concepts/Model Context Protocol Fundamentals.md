@@ -3,10 +3,7 @@
 <cite>
 **Referenced Files in This Document**
 - [README.md](file://README.md)
-- [outline.md](file://outline.md)
 - [pubspec.yaml](file://pubspec.yaml)
-- [AGENTS.md](file://AGENTS.md)
-- [opencode.json](file://opencode.json)
 - [packages/easy_mcp_annotations/lib/mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 - [packages/easy_mcp_generator/lib/mcp_generator.dart](file://packages/easy_mcp_generator/lib/mcp_generator.dart)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
@@ -14,10 +11,19 @@
 - [example/bin/example.dart](file://example/bin/example.dart)
 - [example/bin/example.mcp.dart](file://example/bin/example.mcp.dart)
 - [example/lib/src/todo.dart](file://example/lib/src/todo.dart)
-- [example/lib/src/todo_store.dart](file://example/lib/src/todo_store.dart)
 - [example/lib/src/user.dart](file://example/lib/src/user.dart)
-- [example/lib/src/user_store.dart](file://example/lib/src/user_store.dart)
+- [packages/easy_mcp_annotations/pubspec.yaml](file://packages/easy_mcp_annotations/pubspec.yaml)
+- [packages/easy_mcp_generator/pubspec.yaml](file://packages/easy_mcp_generator/pubspec.yaml)
+- [example/pubspec.yaml](file://example/pubspec.yaml)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated package naming from `mcp_*` to `easy_mcp_*` throughout all documentation
+- Enhanced HTTP transport support with dynamic configuration (port and address parameters)
+- Updated code generation pipeline documentation to reflect the new package structure
+- Revised all examples and references to use the new `easy_mcp_*` package names
+- Added comprehensive HTTP transport configuration documentation
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -39,9 +45,11 @@ Why MCP matters for AI agent development:
 - Extensibility: New capabilities can be added by annotating existing Dart functions; generation handles server scaffolding and schema.
 - Interoperability: Tools and resources become discoverable and usable by any MCP-compliant agent.
 
+**Updated** The package naming has been updated from `mcp_*` to `easy_mcp_*` to provide clearer identification and improved package management.
+
 ## Project Structure
 This is a Dart monorepo organized around two primary packages and an example application:
-- easy_mcp_annotations: Defines the @mcp and @tool annotations used to mark functions for MCP exposure.
+- easy_mcp_annotations: Defines the @Mcp and @Tool annotations used to mark functions for MCP exposure.
 - easy_mcp_generator: A build_runner generator that processes annotations and produces MCP server code and optional JSON metadata.
 - example: Demonstrates usage of the generator to create an MCP server from annotated Dart functions.
 
@@ -49,9 +57,7 @@ This is a Dart monorepo organized around two primary packages and an example app
 graph TB
 subgraph "Workspace"
 WS["pubspec.yaml"]
-AG["AGENTS.md"]
-OUT["outline.md"]
-OC["opencode.json"]
+END["example/pubspec.yaml"]
 end
 subgraph "Packages"
 ANNOT["easy_mcp_annotations<br/>Annotations"]
@@ -80,22 +86,25 @@ EX_SRC --> EX_BIN
 
 **Section sources**
 - [pubspec.yaml:8-11](file://pubspec.yaml#L8-L11)
-- [AGENTS.md:10-15](file://AGENTS.md#L10-L15)
-- [outline.md:11-14](file://outline.md#L11-L14)
+- [packages/easy_mcp_annotations/pubspec.yaml:1-28](file://packages/easy_mcp_annotations/pubspec.yaml#L1-L28)
+- [packages/easy_mcp_generator/pubspec.yaml:1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
 
 ## Core Components
 - Annotations package (easy_mcp_annotations):
-  - Mcp: Controls transport mode (stdio or http) and optional JSON metadata generation.
+  - Mcp: Controls transport mode (stdio or http) and optional JSON metadata generation with dynamic HTTP configuration.
   - Tool: Marks functions as MCP tools and supplies human-readable descriptions and optional icons.
 - Generator package (easy_mcp_generator):
-  - McpBuilder: Scans libraries for @Mcp and @tool annotations, extracts tool metadata and schemas, and generates server code and optional .mcp.json metadata.
+  - McpBuilder: Scans libraries for @Mcp and @Tool annotations, extracts tool metadata and schemas, and generates server code and optional .mcp.json metadata.
   - SchemaBuilder: Converts Dart parameter metadata into schema expressions for validation and discovery.
 
 Key capabilities:
 - AST-based parsing using dart:analyzer for reliable extraction of function signatures and doc comments.
-- Dual transport modes: stdio (JSON-RPC) and HTTP (shelf-based).
+- Dual transport modes: stdio (JSON-RPC) and HTTP (shelf-based) with configurable port and address binding.
 - Automatic schema generation: Dart types mapped to JSON Schema, including nested objects and lists.
 - Optional parameter support and doc comment fallback for descriptions.
+- Dynamic HTTP configuration: Customizable port (default 3000) and bind address (default localhost).
+
+**Updated** Enhanced HTTP transport support with dynamic configuration including port and address parameters for flexible deployment scenarios.
 
 **Section sources**
 - [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-19](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L19)
@@ -107,7 +116,7 @@ Key capabilities:
 
 ## Architecture Overview
 The MCP implementation follows a code generation pipeline:
-- Developer annotates Dart functions with @mcp and @tool.
+- Developer annotates Dart functions with @Mcp and @Tool.
 - build_runner invokes McpBuilder to scan the library and imports for annotated elements.
 - McpBuilder extracts tool metadata, introspects parameter types, and generates server code tailored to the selected transport.
 - Optional JSON metadata is produced for tool discovery and validation.
@@ -121,7 +130,7 @@ participant BR as "build_runner"
 participant MB as "McpBuilder"
 participant Gen as "Generated Server"
 participant Agent as "MCP Agent"
-Dev->>Lib : "@mcp(...), @tool(...)"
+Dev->>Lib : "@Mcp(...), @Tool(...)"
 BR->>MB : Resolve library and imports
 MB->>MB : Extract tools and metadata
 MB->>MB : Introspect types and build schemas
@@ -143,16 +152,22 @@ Gen-->>Agent : Execute tool and return results
 - Mcp:
   - transport: Selects stdio or http.
   - generateJson: Controls whether to emit a .mcp.json metadata file.
+  - port: HTTP server port (default: 3000).
+  - address: HTTP bind address (default: '127.0.0.1').
 - Tool:
   - description: Human-readable tool purpose; falls back to doc comment if absent.
   - icons: Optional URLs for UI representation.
   - execution: Reserved for future execution parameters.
+
+**Updated** Enhanced Mcp annotation with HTTP transport configuration including port and address parameters for flexible deployment.
 
 ```mermaid
 classDiagram
 class Mcp {
 +McpTransport transport
 +bool generateJson
++int port
++String address
 }
 class Tool {
 +String description
@@ -184,12 +199,16 @@ Responsibilities:
 - Extract descriptions (explicit or from doc comments), parameters, and async nature.
 - Determine transport mode and generate server code accordingly.
 - Optionally produce JSON metadata describing tool input schemas.
+- Extract HTTP configuration (port and address) for HTTP transport generation.
 
 Processing logic highlights:
 - Tool discovery across current library and package-local imports.
 - Parameter introspection to derive JSON Schema maps and Dart-to-JSON Schema conversions.
 - Transport selection via annotation inspection.
 - JSON metadata generation with schemaVersion and tools array.
+- HTTP configuration extraction for dynamic server binding.
+
+**Updated** Enhanced McpBuilder with HTTP configuration extraction for dynamic port and address binding.
 
 ```mermaid
 flowchart TD
@@ -198,7 +217,8 @@ CheckLib --> HasMcp{"Has @Mcp?"}
 HasMcp --> |No| Exit["Skip generation"]
 HasMcp --> |Yes| FindTools["Extract tools from library and imports"]
 FindTools --> Transport["Find transport (stdio/http)"]
-Transport --> GenCode["Generate .mcp.dart"]
+Transport --> Config["Extract HTTP config (port/address)"]
+Config --> GenCode["Generate .mcp.dart"]
 GenCode --> JsonOpt{"generateJson enabled?"}
 JsonOpt --> |Yes| GenJson["Generate .mcp.json"]
 JsonOpt --> |No| Done["Complete"]
@@ -247,20 +267,24 @@ Practical implications:
 - Rapid prototyping of tools without manual server boilerplate.
 - Consistent schema-driven discovery and validation.
 - Seamless integration with MCP agents through standardized transports.
+- Flexible HTTP deployment with customizable port and address binding.
+
+**Updated** Example now demonstrates HTTP transport with configurable port (8080) and address ('0.0.0.0') for remote accessibility.
 
 **Section sources**
 - [example/bin/example.dart](file://example/bin/example.dart)
 - [example/bin/example.mcp.dart](file://example/bin/example.mcp.dart)
 - [example/lib/src/todo.dart](file://example/lib/src/todo.dart)
-- [example/lib/src/todo_store.dart](file://example/lib/src/todo_store.dart)
 - [example/lib/src/user.dart](file://example/lib/src/user.dart)
-- [example/lib/src/user_store.dart](file://example/lib/src/user_store.dart)
 
 ## Dependency Analysis
 Relationships:
 - easy_mcp_generator depends on easy_mcp_annotations for type checking and constant reader access.
 - Both packages rely on analyzer for AST parsing and source_gen/code_builder for code generation.
 - The generator optionally uses shelf for HTTP transport generation.
+- Example application depends on easy_mcp_annotations, easy_mcp_generator, and supporting packages.
+
+**Updated** All dependencies now use the new `easy_mcp_*` package naming convention.
 
 ```mermaid
 graph LR
@@ -270,6 +294,8 @@ GEN --> SRCGEN["source_gen"]
 GEN --> CODEBUILDER["code_builder"]
 GEN --> ANALYZER["analyzer"]
 GEN --> SHELF["shelf (HTTP)"]
+EX["example"] --> ANNOT
+EX --> GEN
 ```
 
 **Diagram sources**
@@ -287,20 +313,30 @@ GEN --> SHELF["shelf (HTTP)"]
 - AST traversal and schema introspection scale with the number of annotated tools and parameter depth; keep tool sets focused and parameter schemas concise.
 - HTTP transport adds overhead compared to stdio; prefer stdio for tight CLI integrations and HTTP when remote clients require network access.
 - JSON metadata generation is optional; disable it in constrained environments to reduce I/O.
+- HTTP configuration flexibility allows optimal deployment for different environments (development vs production).
+
+**Updated** Added consideration for HTTP configuration flexibility and deployment scenarios.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
 - No tools generated:
-  - Ensure the library has an @mcp annotation and at least one function annotated with @tool.
+  - Ensure the library has an @Mcp annotation and at least one function annotated with @Tool.
   - Verify build_runner executed after adding annotations.
 - Incorrect transport:
-  - Confirm the @mcp transport setting matches the intended mode (stdio/http).
+  - Confirm the @Mcp transport setting matches the intended mode (stdio/http).
 - Missing descriptions:
-  - Provide a description in @tool or include a doc comment on the annotated function.
+  - Provide a description in @Tool or include a doc comment on the annotated function.
 - Schema mismatches:
   - Review parameter types and ensure custom types are package-local for proper introspection.
 - HTTP server binding:
   - Check port availability and firewall rules if using HTTP transport.
+  - Verify address configuration ('127.0.0.1' for local only, '0.0.0.0' for remote access).
+- Package naming conflicts:
+  - Ensure all imports use the new `easy_mcp_*` package names.
+- Generated code location:
+  - Generated files are created in the same directory as the annotated source with `.mcp.dart` extension.
+
+**Updated** Added troubleshooting guidance for HTTP configuration and package naming issues.
 
 **Section sources**
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-28](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L28)
@@ -309,3 +345,5 @@ Common issues and resolutions:
 
 ## Conclusion
 The Model Context Protocol provides a robust foundation for AI agent integration by standardizing how agents discover, validate, and execute tools and access resources. This repository demonstrates a practical path to MCP adoption in Dart projects: annotate existing functions, run the generator, and deploy either stdio or HTTP servers. The resulting tools benefit from automatic schema generation, consistent metadata, and secure, isolated execution—enabling scalable and maintainable agent ecosystems.
+
+**Updated** The package has been renamed to `easy_mcp_*` for improved clarity and package management, while maintaining full backward compatibility in functionality. The enhanced HTTP transport support with dynamic configuration provides greater flexibility for deployment scenarios, from local development to production environments.
