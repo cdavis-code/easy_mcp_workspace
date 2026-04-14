@@ -149,11 +149,18 @@ The server uses `dart_mcp` with stdio transport. It communicates via JSON-RPC 2.
 
 ### HTTP Transport
 
-If you configured HTTP transport with custom port/address:
+If you configured HTTP transport with custom port/address (as shown in the example above with port 8080 and address '0.0.0.0'):
 
 ```bash
 dart run example/bin/example.mcp.dart
 # Server will listen on http://0.0.0.0:8080
+```
+
+With default settings (port 3000, address '127.0.0.1'):
+
+```bash
+dart run example/bin/example.mcp.dart
+# Server will listen on http://127.0.0.1:3000
 ```
 
 The HTTP server accepts POST requests with JSON-RPC 2.0 payloads.
