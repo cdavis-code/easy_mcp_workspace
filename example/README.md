@@ -1,6 +1,6 @@
 # MCP Example
 
-Example demonstrating how to use `easy_mcp_annotations` and `easy_mcp_generator` with the official `dart_mcp` package. This example showcases a realistic many-to-many domain model where **Users** and **Todos** have bidirectional relationships — a todo can be assigned to multiple users, and a user can have multiple todos.
+Example demonstrating how to use `easy_mcp_annotations` and `easy_mcp_generator`. This example showcases a realistic many-to-many domain model where **Users** and **Todos** have bidirectional relationships — a todo can be assigned to multiple users, and a user can have multiple todos.
 
 ## Prerequisites
 
@@ -27,6 +27,23 @@ Future<void> main() async {
   // Your initialization code...
 }
 ```
+
+#### HTTP Transport Configuration
+
+For HTTP transport, you can customize the port and bind address:
+
+```dart
+@Mcp(
+  transport: McpTransport.http,
+  port: 8080,           // Default: 3000
+  address: '0.0.0.0',   // Default: '127.0.0.1' (loopback)
+)
+Future<void> main() async {
+  // Your initialization code...
+}
+```
+
+**Note:** Use `address: '0.0.0.0'` to listen on all network interfaces (useful for Docker containers or remote access).
 
 ```dart
 // lib/src/user_store.dart
@@ -107,7 +124,9 @@ The generated MCP server exposes 14 tools organized by store:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `transport` | `McpTransport` | `McpTransport.stdio` | Transport protocol (stdio or sse) |
+| `transport` | `McpTransport` | `McpTransport.stdio` | Transport protocol (stdio or http) |
+| `port` | `int` | `3000` | HTTP server port (only for HTTP transport) |
+| `address` | `String` | `'127.0.0.1'` | HTTP bind address (only for HTTP transport). Use `'0.0.0.0'` to listen on all interfaces |
 
 ### `@Tool`
 
@@ -124,7 +143,20 @@ After running `build_runner`, run the generated server:
 dart run example/bin/example.mcp.dart
 ```
 
+### stdio Transport (Default)
+
 The server uses `dart_mcp` with stdio transport. It communicates via JSON-RPC 2.0 over stdin/stdout.
+
+### HTTP Transport
+
+If you configured HTTP transport with custom port/address:
+
+```bash
+dart run example/bin/example.mcp.dart
+# Server will listen on http://0.0.0.0:8080
+```
+
+The HTTP server accepts POST requests with JSON-RPC 2.0 payloads.
 
 ### Testing the Server
 
