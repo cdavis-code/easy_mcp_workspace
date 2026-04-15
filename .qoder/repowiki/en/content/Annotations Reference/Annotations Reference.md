@@ -19,12 +19,12 @@
 
 ## Update Summary
 **Changes Made**
-- Enhanced @Parameter annotation documentation with comprehensive metadata and validation capabilities
-- Updated version references to 0.2.1 across all documentation
-- Added detailed coverage of pattern validation, enum restrictions, and sensitive data handling
-- Expanded practical examples showing @Parameter usage with validation features
-- Updated architecture diagrams to reflect enhanced parameter metadata processing pipeline
-- Added comprehensive validation rules and type handling documentation
+- Enhanced @Mcp annotation documentation with new tool naming features: toolPrefix parameter, autoClassPrefix parameter, and custom tool names via @Tool annotation name parameter
+- Updated @Tool annotation documentation to include custom tool name capability
+- Added comprehensive coverage of tool naming hierarchy and precedence rules
+- Expanded practical examples demonstrating tool organization and collision avoidance
+- Updated architecture diagrams to reflect enhanced tool naming pipeline
+- Added detailed documentation of tool naming precedence: custom @Tool.name > method name > toolPrefix > autoClassPrefix
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -47,8 +47,9 @@ This document provides a comprehensive reference for Easy MCP's annotation syste
 - Annotation inheritance and precedence rules
 - Advanced usage patterns, best practices, and common mistakes
 - How annotations integrate with the code generation pipeline and affect schema generation
+- **New** Tool naming enhancements including toolPrefix for consistent naming scopes, autoClassPrefix for automatic class-based namespace isolation, and custom tool names via @Tool annotation name parameter
 
-**Updated** Version 0.2.1 introduces comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation and validation capabilities including pattern validation, enum restrictions, and sensitive data handling.
+**Updated** Version 0.2.1 introduces comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation and validation capabilities including pattern validation, enum restrictions, and sensitive data handling. **Enhanced** Version 0.2.2 adds powerful tool naming capabilities for flexible tool organization and collision avoidance.
 
 ## Project Structure
 The annotation system spans two packages:
@@ -58,11 +59,11 @@ The annotation system spans two packages:
 ```mermaid
 graph TB
 subgraph "Annotations"
-A["mcp_annotations.dart<br/>Defines @Mcp, @Tool, @Parameter"]
+A["mcp_annotations.dart<br/>Defines @Mcp, @Tool, @Parameter<br/>+ Tool Naming Features"]
 end
 subgraph "Generator"
 B["mcp_generator.dart<br/>Exports builder"]
-C["mcp_builder.dart<br/>AST parsing, tool extraction,<br/>parameter metadata extraction,<br/>transport selection, JSON metadata"]
+C["mcp_builder.dart<br/>AST parsing, tool extraction,<br/>parameter metadata extraction,<br/>transport selection, tool naming,<br/>JSON metadata"]
 D["templates.dart<br/>Stdio and HTTP server templates"]
 E["schema_builder.dart<br/>Dart type to JSON Schema mapping<br/>with enhanced parameter validation"]
 end
@@ -102,20 +103,26 @@ H --> C
     - generateJson: bool (optional; default false)
     - port: int (HTTP transport only; default 3000)
     - address: String (HTTP transport only; default '127.0.0.1')
+    - **toolPrefix: String? (optional; adds prefix to all tool names in scope)**
+    - **autoClassPrefix: bool (optional; automatically prefixes tools with class name)**
   - Behavior:
     - Triggers code generation when present at library or element level
     - Controls whether HTTP or stdio server is generated
     - Controls optional .mcp.json metadata emission
     - Configures HTTP server binding and port for HTTP transport
+    - **Applies toolPrefix to all tools in the annotated scope**
+    - **Automatically prefixes tools with class names when autoClassPrefix is true**
 
 - @Tool (tool metadata)
   - Purpose: Marks a function or method as an MCP tool and supplies metadata
   - Parameters:
+    - **name: String? (optional; custom tool name for collision avoidance)**
     - description: string? (optional; falls back to doc comment if absent)
     - icons: List<String>? (optional; icon URLs)
     - execution: Map<String, Object?>? (reserved; currently ignored and marked deprecated)
   - Behavior:
     - Extracts tool description from annotation or doc comment
+    - **Uses custom name if provided, otherwise falls back to method name**
     - Participates in automatic schema generation via parameter introspection
 
 - @Parameter (rich parameter metadata)
@@ -140,19 +147,21 @@ H --> C
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
 ## Architecture Overview
-The annotation-driven pipeline now includes comprehensive parameter metadata processing with validation capabilities:
+The annotation-driven pipeline now includes comprehensive parameter metadata processing with validation capabilities and enhanced tool naming:
 1. Annotations are parsed from source using analyzer and source_gen
 2. Tools and parameter metadata are discovered across the library and its package-local imports
 3. Transport is determined from @Mcp on library or elements
-4. Templates generate either stdio or HTTP server code with enhanced parameter metadata
-5. Optional JSON metadata is produced when requested, including parameter validation rules
-6. Parameter validation rules are embedded in both generated schemas and metadata
+4. **Tool naming hierarchy is applied: custom @Tool.name > method name > toolPrefix > autoClassPrefix**
+5. Templates generate either stdio or HTTP server code with enhanced parameter metadata
+6. Optional JSON metadata is produced when requested, including parameter validation rules
+7. Parameter validation rules are embedded in both generated schemas and metadata
 
 ```mermaid
 sequenceDiagram
 participant Dev as "Developer"
 participant Gen as "McpBuilder"
 participant Lib as "Library AST"
+participant ToolNaming as "Tool Naming Pipeline"
 participant ParamMeta as "Parameter Metadata Extractor"
 participant Validator as "Validation Rules Processor"
 participant Tmpl as "Templates"
@@ -160,6 +169,8 @@ participant Out as "Generated Artifacts"
 Dev->>Gen : "build_runner runs"
 Gen->>Lib : "Resolve library and scan for @Mcp/@Tool/@Parameter"
 Lib-->>Gen : "Tool definitions + parameter metadata"
+Gen->>ToolNaming : "Apply tool naming hierarchy : <br/>@Tool.name > method name > toolPrefix > autoClassPrefix"
+ToolNaming-->>Gen : "Final tool names with proper scoping"
 Gen->>ParamMeta : "Extract @Parameter annotations"
 ParamMeta-->>Gen : "Rich parameter metadata with validation rules"
 Gen->>Validator : "Process validation constraints"
@@ -189,23 +200,31 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
   - generateJson: bool (named, default false)
   - port: int (named, default 3000, HTTP transport only)
   - address: String (named, default '127.0.0.1', HTTP transport only)
+  - **toolPrefix: String? (named, optional; adds prefix to all tool names)**
+  - **autoClassPrefix: bool (named, default false; prefixes tools with class names)**
 
 - Validation and defaults
   - If transport is omitted, defaults to stdio
   - If generateJson is omitted, defaults to false
   - If port is omitted for HTTP transport, defaults to 3000
   - If address is omitted for HTTP transport, defaults to '127.0.0.1'
+  - **If toolPrefix is omitted, no prefix is applied**
+  - **If autoClassPrefix is omitted, defaults to false**
 
 - Precedence and inheritance
   - The generator scans library units and elements for @Mcp
   - The first @Mcp encountered determines transport and JSON generation behavior for that library
   - Elements annotated with @Mcp take effect even if the library lacks it (generator checks both)
+  - **toolPrefix applies to all tools in the annotated scope**
+  - **autoClassPrefix applies to all class methods in the annotated scope**
 
 - Effects on generated code
   - transport=http → HTTP server template is used
   - transport=stdio → stdio server template is used
   - generateJson=true → emits .mcp.json metadata alongside .mcp.dart
   - HTTP transport configuration affects server binding and port
+  - **toolPrefix → all tool names receive the specified prefix**
+  - **autoClassPrefix → class methods become ClassName_methodName**
 
 **Section sources**
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
@@ -213,20 +232,63 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
 
 ### @Tool Annotation Reference
 - Parameters
+  - **name: String? (optional; custom tool name for collision avoidance)**
   - description: string? (optional)
   - icons: List<String>? (optional)
   - execution: Map<String, Object?>? (reserved; deprecated, ignored)
 
 - Resolution order
+  - **If name is provided, it overrides method name and takes precedence**
   - If description is provided, it overrides doc comment
   - If description is omitted, doc comment is used
   - If neither exists, a default placeholder is applied
 
 - Effects on generated code
-  - Tool name: function/method name
+  - Tool name: **custom name (if provided) > method name > toolPrefix > autoClassPrefix**
   - Tool description: resolved value
   - Tool input schema: derived from parameter introspection
   - Icons: included in tool registration (if provided)
+
+**Section sources**
+- [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
+- [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
+
+### Tool Naming Hierarchy and Precedence
+**New** The tool naming system provides flexible organization and collision avoidance through a well-defined hierarchy:
+
+#### Naming Priority Order
+1. **@Tool.name (highest priority)** - Explicit custom name from annotation
+2. **Method name** - Original method name when no custom name provided
+3. **toolPrefix** - Scope-wide prefix from @Mcp.annotation
+4. **autoClassPrefix** - Class name prefix for class methods (lowest priority)
+
+#### Application Logic
+```mermaid
+flowchart TD
+A["Base Tool Name"] --> B{"@Tool.name provided?"}
+B --> |Yes| C["@Tool.name"]
+B --> |No| D["Method name"]
+C --> E{"toolPrefix provided?"}
+D --> E
+E --> |Yes| F["toolPrefix + Base"]
+E --> |No| G["Base (no prefix)"]
+F --> H{"autoClassPrefix enabled?"}
+G --> H
+H --> |Yes| I["Class name + '_' + Base"]
+H --> |No| J["Final tool name"]
+I --> J
+```
+
+**Diagram sources**
+- [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
+
+#### Practical Examples
+- **Custom tool name**: `@Tool(name: 'user_create')` → Tool name: `user_create`
+- **Method name fallback**: `@Tool()` → Tool name: `createUser`
+- **toolPrefix only**: `@Mcp(toolPrefix: 'api_')` → Tool name: `api_createUser`
+- **autoClassPrefix only**: `@Mcp(autoClassPrefix: true)` → Tool name: `UserService_createUser`
+- **Combined prefixes**: `@Mcp(toolPrefix: 'api_', autoClassPrefix: true)` → Tool name: `api_UserService_createUser`
+- **Custom name overrides everything**: `@Mcp(toolPrefix: 'api_') @Tool(name: 'custom_name')` → Tool name: `custom_name`
 
 **Section sources**
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
@@ -299,7 +361,7 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
 - [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 
 ### Practical Examples and Effects
-**Updated** Examples now demonstrate comprehensive @Parameter usage patterns with validation features.
+**Updated** Examples now demonstrate comprehensive @Parameter usage patterns with validation features and enhanced tool naming capabilities.
 
 - Example A: HTTP server with explicit transport
   - Annotation: @Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0') on main()
@@ -336,6 +398,21 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
   - Effect: SchemaBuilder builds nested object schemas; templates convert lists using fromJson
   - Related files: [schema_builder.dart](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart), [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart), [todo.dart](file://example/lib/src/todo.dart), [user.dart](file://example/lib/src/user.dart)
 
+- Example H: Tool naming with toolPrefix
+  - Annotations: @Mcp(toolPrefix: 'user_service_') on class, @Tool(description: 'Create user')
+  - Effect: Tool name becomes `user_service_createUser`
+  - Related files: [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
+
+- Example I: Tool naming with autoClassPrefix
+  - Annotations: @Mcp(autoClassPrefix: true) on class, @Tool(description: 'Create user')
+  - Effect: Tool name becomes `UserService_createUser`
+  - Related files: [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
+
+- Example J: Tool naming with custom @Tool.name
+  - Annotations: @Tool(name: 'custom_user_create', description: 'Create user')
+  - Effect: Tool name becomes `custom_user_create` (overrides method name)
+  - Related files: [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
+
 **Section sources**
 - [example.dart](file://example/bin/example.dart)
 - [user_store.dart](file://example/lib/src/user_store.dart)
@@ -358,9 +435,15 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
 
 - Metadata precedence
   - @Tool.description takes precedence over doc comment
+  - @Tool.name takes precedence over method name in tool naming
   - @Parameter.title takes precedence over parameter name
   - @Parameter.description falls back to parameter doc comment
   - If both are missing, defaults are applied
+
+- **Tool naming precedence**
+  - **@Tool.name (highest) > Method name > toolPrefix > autoClassPrefix (lowest)**
+  - **toolPrefix applies to all tools in annotated scope**
+  - **autoClassPrefix applies to all class methods in annotated scope**
 
 - Execution parameter
   - @Tool.execution is reserved and currently ignored; avoid relying on it
@@ -370,13 +453,19 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 
 ### Advanced Usage Patterns and Best Practices
-**Updated** Enhanced patterns now leverage comprehensive parameter metadata capabilities.
+**Updated** Enhanced patterns now leverage comprehensive parameter metadata capabilities and flexible tool naming.
 
 - Combine @Mcp, @Tool, and @Parameter effectively
   - Place @Mcp on the library or main entry to trigger generation
   - Apply @Tool to each method intended as an MCP tool
   - Use @Parameter for critical parameters requiring rich metadata
   - Prefer explicit description over relying on doc comments for clarity
+
+- **Tool naming strategy**
+  - Use @Tool.name for global tool names that must be unique across all services
+  - Use toolPrefix for domain-based organization (e.g., 'user_', 'order_')
+  - Use autoClassPrefix for automatic class-based namespace isolation
+  - Combine strategies for complex service architectures
 
 - Parameter metadata strategy
   - Use @Parameter.title for user-friendly parameter labels
@@ -400,12 +489,18 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
   - Enable generateJson=true to emit .mcp.json for tool catalogs
   - Review emitted metadata to validate schema correctness and parameter validation rules
 
+- **Tool organization best practices**
+  - Use toolPrefix for service-level organization (e.g., 'ecommerce_')
+  - Use autoClassPrefix for automatic namespace isolation
+  - Use @Tool.name for globally unique tool names
+  - Avoid naming collisions by combining strategies appropriately
+
 **Section sources**
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
 ### Common Annotation Mistakes
-**Updated** Includes new mistakes related to @Parameter usage.
+**Updated** Includes new mistakes related to @Parameter usage and tool naming.
 
 - Missing @Mcp
   - Symptom: No .mcp.dart/.mcp.json generated
@@ -419,7 +514,12 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
   - Symptom: Tool description appears less descriptive than expected
   - Fix: Provide @Tool(description: "...") explicitly
 
-- Reserved execution parameter
+- **Tool naming conflicts**
+  - Symptom: Duplicate tool names in generated metadata
+  - Fix: Use @Tool.name for unique names, or combine toolPrefix with autoClassPrefix
+  - Fix: Ensure tool naming hierarchy is understood and applied consistently
+
+- **Reserved execution parameter**
   - Symptom: Confusion about execution metadata
   - Fix: Do not rely on @Tool.execution; it is reserved and ignored
 
@@ -475,6 +575,10 @@ Builder --> Sb["schema_builder.dart"]
   - @Parameter annotations are processed during AST traversal
   - Validation rules are validated for type consistency
   - Complex enum values are normalized to supported types
+- **Tool naming optimization**
+  - Tool names are computed once per tool during extraction
+  - Prefix application is efficient string concatenation operations
+  - Class name detection avoids unnecessary processing for non-class methods
 
 ## Troubleshooting Guide
 - No generated artifacts
@@ -489,7 +593,12 @@ Builder --> Sb["schema_builder.dart"]
   - Provide @Tool(description: "...") or ensure doc comments are present
   - Avoid relying solely on fallback behavior
 
-- Reserved execution parameter
+- **Tool naming issues**
+  - **Verify tool naming hierarchy: @Tool.name > method name > toolPrefix > autoClassPrefix**
+  - **Check for naming conflicts when combining strategies**
+  - **Ensure toolPrefix is properly formatted (avoid trailing underscores)**
+
+- **Reserved execution parameter**
   - Remove or ignore @Tool.execution; it is reserved and ignored
 
 - Parameter metadata issues
@@ -503,4 +612,4 @@ Builder --> Sb["schema_builder.dart"]
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
 ## Conclusion
-Easy MCP's annotation system offers a concise and powerful way to expose Dart functions as MCP tools. Version 0.2.1 significantly enhances the system with comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation, validation, and user experience improvements. The enhanced @Parameter annotation now provides complete validation capabilities including pattern validation, enum restrictions, and sensitive data handling, making it a powerful tool for creating robust and user-friendly MCP integrations. By combining @Mcp for transport configuration, @Tool for metadata, and @Parameter for detailed parameter information, developers can quickly generate transport-ready servers with sophisticated parameter handling and accurate JSON schemas. Following the best practices and understanding precedence rules ensures predictable and maintainable code generation with enhanced user experience capabilities.
+Easy MCP's annotation system offers a concise and powerful way to expose Dart functions as MCP tools. Version 0.2.1 significantly enhances the system with comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation, validation, and user experience improvements. The enhanced @Parameter annotation now provides complete validation capabilities including pattern validation, enum restrictions, and sensitive data handling, making it a powerful tool for creating robust and user-friendly MCP integrations. **Version 0.2.2 further strengthens the system with powerful tool naming capabilities**, providing flexible tool organization and collision avoidance through toolPrefix for consistent naming scopes, autoClassPrefix for automatic class-based namespace isolation, and custom tool names via @Tool annotation name parameter. By combining @Mcp for transport configuration, @Tool for metadata, @Parameter for detailed parameter information, and the new tool naming features for organization, developers can quickly generate transport-ready servers with sophisticated parameter handling, accurate JSON schemas, and well-structured tool hierarchies. Following the best practices and understanding precedence rules ensures predictable and maintainable code generation with enhanced user experience capabilities and robust tool organization.

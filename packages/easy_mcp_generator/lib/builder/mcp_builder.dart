@@ -108,6 +108,7 @@ class McpBuilder extends Builder {
 
       tools.add(<String, dynamic>{
         'name': toolName,
+        'methodName': element.name ?? 'unnamed',
         'description': description,
         'parameters': parameters,
         'isAsync': isAsync,
@@ -123,19 +124,22 @@ class McpBuilder extends Builder {
         final description = _extractDescription(toolAnnotation, method);
         final parameters = _extractParametersFromElement(method);
         final isAsync = method.returnType.isDartAsyncFuture;
-        
-        // Get base tool name
-        String toolName = _extractToolName(
+
+        // Get base tool name (without any prefixes)
+        final baseToolName = _extractToolName(
           toolAnnotation,
           method.name ?? 'unnamed',
           null, // Don't apply prefix yet
         );
         
+        // Build final tool name with prefixes
+        String toolName = baseToolName;
+
         // Apply auto class prefix if enabled
         if (autoClassPrefix && element.name != null) {
           toolName = '${element.name}_$toolName';
         }
-        
+
         // Apply custom tool prefix if provided
         if (toolPrefix != null && toolPrefix.isNotEmpty) {
           toolName = '$toolPrefix$toolName';
@@ -143,6 +147,7 @@ class McpBuilder extends Builder {
 
         tools.add(<String, dynamic>{
           'name': toolName,
+          'methodName': method.name ?? 'unnamed',
           'description': description,
           'parameters': parameters,
           'isAsync': isAsync,
@@ -171,7 +176,11 @@ class McpBuilder extends Builder {
     final packageName = _extractPackageName(currentPackageUri);
 
     // Extract tools from the current library (@Mcp file itself)
-    final currentLibTools = await _extractToolsFromLibrary(library, toolPrefix, autoClassPrefix);
+    final currentLibTools = await _extractToolsFromLibrary(
+      library,
+      toolPrefix,
+      autoClassPrefix,
+    );
     final currentAlias = _deriveAlias(currentPackageUri);
     for (final tool in currentLibTools) {
       tool['sourceImport'] = currentPackageUri;
@@ -977,7 +986,9 @@ class McpBuilder extends Builder {
       for (final method in element.methods) {
         final methodAnnotation = mcpChecker.firstAnnotationOf(method);
         if (methodAnnotation != null) {
-          final autoPrefix = _extractAutoClassPrefixFromAnnotation(methodAnnotation);
+          final autoPrefix = _extractAutoClassPrefixFromAnnotation(
+            methodAnnotation,
+          );
           if (autoPrefix != null) return autoPrefix;
         }
       }

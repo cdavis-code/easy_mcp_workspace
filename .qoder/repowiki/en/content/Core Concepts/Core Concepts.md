@@ -19,11 +19,11 @@
 
 ## Update Summary
 **Changes Made**
-- Enhanced documentation to reflect improved file organization and repository maintenance
-- Updated package structure documentation with current workspace layout
-- Added comprehensive coverage of HTTP transport configuration with port and address parameters
-- Expanded dual transport mode documentation with practical configuration examples
-- Improved code generation workflow documentation with HTTP-specific details
+- Enhanced documentation to reflect the new flexible tool naming system with `toolPrefix` and `autoClassPrefix` parameters
+- Updated tool naming concepts section to explain prefix-based organization strategies
+- Added comprehensive coverage of the naming priority system and tool organization best practices
+- Expanded dual transport mode documentation with HTTP-specific configuration examples
+- Improved code generation workflow documentation with naming system integration
 - Enhanced type system integration documentation with List inner type handling
 - Updated dependency analysis with current package specifications
 
@@ -47,6 +47,7 @@ This document explains the core concepts of Easy MCP, focusing on how the framew
 - Dual transport modes (stdio and HTTP) and their use cases
 - AST-based parsing using dart:analyzer and the template-driven code generation system
 - Type system integration, schema generation principles, and cross-library tool discovery
+- **Enhanced tool naming system** with flexible prefix-based organization and automatic class-based namespaces
 - Conceptual diagrams illustrating the relationship between annotations, build process, and generated code
 
 ## Project Structure
@@ -88,9 +89,11 @@ A -. depends on .-> B
 - Annotations:
   - @mcp controls transport mode (stdio or http) and optional JSON metadata generation flag.
   - @tool marks functions as MCP tools and supplies metadata such as description and icons.
+  - **Enhanced naming system**: toolPrefix for custom domain prefixes and autoClassPrefix for automatic class-based namespaces.
 - Generator:
   - Scans libraries and imports for @mcp and @tool annotations.
   - Extracts function signatures, parameter types, and doc comments.
+  - **Integrates flexible naming system**: Applies toolPrefix, autoClassPrefix, and custom tool names in priority order.
   - Generates MCP-compatible server code and optionally JSON metadata.
 - Example:
   - Demonstrates HTTP transport configuration and tool registration.
@@ -99,7 +102,8 @@ Key capabilities:
 - AST-based parsing using dart:analyzer for reliable code extraction.
 - Automatic schema generation mapping Dart types to JSON Schema.
 - Cross-library tool discovery across package-local imports.
-- Dual transport modes: stdio (JSON-RPC) and HTTP (Shelf-based).
+- Dual transport modes: stdio (JSON-RPC) and HTTP (Shelf).
+- **Flexible tool naming with prefix-based organization and automatic class namespaces**.
 
 **Section sources**
 - [mcp_annotations.dart:6-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L49)
@@ -108,8 +112,8 @@ Key capabilities:
 
 ## Architecture Overview
 The Easy MCP pipeline consists of three stages:
-1. Authoring: Developers annotate functions with @mcp and @tool.
-2. Build: The generator scans the library and imports, extracts metadata, and produces server code.
+1. Authoring: Developers annotate functions with @mcp and @tool, utilizing the flexible naming system.
+2. Build: The generator scans the library and imports, extracts metadata, applies naming conventions, and produces server code.
 3. Runtime: The generated server runs in the chosen transport mode and exposes tools to MCP clients.
 
 ```mermaid
@@ -117,10 +121,13 @@ sequenceDiagram
 participant Dev as "Developer"
 participant Lib as "Annotated Library"
 participant Gen as "Generator (McpBuilder)"
+participant Naming as "Naming System"
 participant Out as "Generated Code"
 participant Srv as "MCP Server"
 Dev->>Lib : Write @mcp/@tool annotated functions
 Lib->>Gen : Provide library units and imports
+Gen->>Naming : Apply toolPrefix/autoClassPrefix/custom names
+Naming->>Gen : Return normalized tool names
 Gen->>Gen : Parse with dart : analyzer
 Gen->>Out : Emit .mcp.dart and .mcp.json
 Out->>Srv : Launch stdio or HTTP server
@@ -140,6 +147,8 @@ Srv-->>Dev : Tools available to agents
   - generateJson: Controls whether to emit .mcp.json metadata.
   - port: HTTP server port configuration (default: 3000).
   - address: HTTP server bind address (default: '127.0.0.1').
+  - **toolPrefix: Adds a custom prefix to all tool names in this scope**.
+  - **autoClassPrefix: Automatically prefixes tool names with their class name**.
 - @tool:
   - description: Overrides doc comment when present.
   - icons: Optional list of icon URLs.
@@ -148,6 +157,7 @@ Srv-->>Dev : Tools available to agents
 Implementation highlights:
 - Enum McpTransport defines stdio and http.
 - Tool supports optional metadata and deprecation notice for execution.
+- **Enhanced naming system with flexible prefix application**.
 
 ```mermaid
 classDiagram
@@ -156,6 +166,8 @@ class Mcp {
 +bool generateJson
 +int port
 +String address
++String? toolPrefix
++bool autoClassPrefix
 }
 class Tool {
 +String? description
@@ -177,10 +189,55 @@ Mcp --> McpTransport : "uses"
 - [mcp_annotations.dart:6-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L49)
 - [README.md:59-80](file://README.md#L59-L80)
 
+### Flexible Tool Naming System
+**Updated** The tool naming system now provides three layers of customization:
+
+#### Naming Priority System
+1. **Custom tool name** (`@Tool.name`): Highest priority, overrides method name
+2. **Class name prefix** (`autoClassPrefix: true`): Applied to class methods
+3. **Domain prefix** (`toolPrefix`): Applied to all tools in scope
+
+#### Examples
+- **Custom name override**: `@Tool(name: 'user_create')` → Tool name: `user_create`
+- **Class-based naming**: `@Mcp(autoClassPrefix: true)` → Tool name: `UserService_createUser`
+- **Domain organization**: `@Mcp(toolPrefix: 'user_service_')` → Tool name: `user_service_createUser`
+- **Combined approach**: Both class and domain prefixes → Tool name: `user_service_UserService_createUser`
+
+#### Tool Organization Strategies
+- **Domain-based organization**: Use `toolPrefix` to group tools by domain (e.g., `user_`, `order_`, `admin_`)
+- **Class-based organization**: Use `autoClassPrefix: true` to namespace tools by their defining class
+- **Hybrid approach**: Combine both for hierarchical organization (e.g., `api_user_UserService_createUser`)
+- **Collision avoidance**: Use custom names for methods with identical names across different classes
+
+```mermaid
+flowchart TD
+Start(["Tool Name Resolution"]) --> Custom{"@Tool.name provided?"}
+Custom --> |Yes| UseCustom["Use custom tool name"]
+Custom --> |No| MethodName["Use method name"]
+MethodName --> AutoClass{"autoClassPrefix enabled?"}
+AutoClass --> |Yes| AddClass["Add class name prefix"]
+AutoClass --> |No| DomainPrefix{"toolPrefix provided?"}
+AddClass --> DomainPrefix
+DomainPrefix --> |Yes| AddDomain["Add domain prefix"]
+DomainPrefix --> |No| Final["Final tool name"]
+AddDomain --> Final
+UseCustom --> Final
+```
+
+**Diagram sources**
+- [mcp_builder.dart:127-142](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L127-L142)
+- [mcp_annotations.dart:108-119](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L108-L119)
+
+**Section sources**
+- [mcp_annotations.dart:6-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L49)
+- [mcp_builder.dart:127-142](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L127-L142)
+- [mcp_builder.dart:277-300](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L277-L300)
+
 ### Code Generation Workflow
 The generator performs the following steps:
 - Detects libraries with @mcp annotations.
 - Recursively scans the library and package-local imports for @tool annotations.
+- **Applies the flexible naming system**: Resolves tool names using the priority system.
 - Extracts function metadata, parameter types, and doc comments.
 - Generates transport-specific server code and optional JSON metadata.
 
@@ -190,7 +247,8 @@ Start(["Start Build"]) --> CheckMcp["@mcp present?"]
 CheckMcp --> |No| Exit["Skip"]
 CheckMcp --> |Yes| ScanLib["Scan library and imports"]
 ScanLib --> ExtractTools["Extract @tool functions"]
-ExtractTools --> Transport{"Transport mode"}
+ExtractTools --> ResolveNames["Resolve tool names<br/>using naming system"]
+ResolveNames --> Transport{"Transport mode"}
 Transport --> |http| GenHttp["Generate HTTP server<br/>with port/address config"]
 Transport --> |stdio| GenStdio["Generate stdio server"]
 GenHttp --> WriteDart[".mcp.dart"]
@@ -236,11 +294,13 @@ Use cases:
 - Template-driven generation:
   - Produces transport-specific server code and optional JSON metadata.
   - Cross-library tool discovery ensures tools from package-local imports are included.
+  - **Integrates flexible naming system for consistent tool naming across generated code**.
 
 ```mermaid
 graph LR
 Parser["Analyzer Parser<br/>dart:analyzer"] --> Extract["Extract Metadata"]
-Extract --> Schema["Dart->JSON Schema"]
+Extract --> Naming["Apply Naming System"]
+Naming --> Schema["Dart->JSON Schema"]
 Extract --> Tools["Aggregate Tools"]
 Tools --> Templates["Templates"]
 Schema --> Templates
@@ -292,6 +352,7 @@ IsCustom --> |No| Fallback["Object fallback"]
 - The generator scans the current library and package-local imports for @tool annotations.
 - It derives import aliases and tracks counts to avoid collisions.
 - Tools are enriched with sourceImport and sourceAlias for traceability.
+- **Integrates with the naming system to ensure consistent tool naming across imported libraries**.
 
 ```mermaid
 sequenceDiagram
@@ -300,6 +361,7 @@ participant Imp as "Package-Local Imports"
 participant Gen as "McpBuilder"
 Lib->>Gen : Exported tools
 Imp->>Gen : Imported tools
+Gen->>Gen : Apply naming system to imported tools
 Gen->>Gen : Alias derivation and collision handling
 Gen-->>Lib : Aggregated tools with source metadata
 ```
@@ -371,6 +433,7 @@ Gen --> Sh["shelf"]
 - Cross-library discovery is scoped to package-local imports to reduce unnecessary work.
 - Schema generation avoids cycles by tracking visited types during introspection.
 - HTTP transport leverages Shelf's efficient request handling for MCP message routing.
+- **Naming system optimization**: Tool name resolution is performed once per tool during generation, minimizing runtime overhead.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -384,6 +447,11 @@ Common issues and resolutions:
 - Parameter schema mismatches:
   - Review Dart type annotations and ensure custom types are serializable.
   - Check for nullable vs required fields and adjust types accordingly.
+- **Tool naming conflicts**:
+  - Use custom tool names (@Tool.name) to override method names.
+  - Enable autoClassPrefix to avoid collisions between classes with same method names.
+  - Use toolPrefix to organize tools by domain and prevent global namespace collisions.
+  - Combine naming strategies for hierarchical organization (e.g., api_user_UserService_createUser).
 
 **Section sources**
 - [mcp_builder.dart:27-33](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L33)
@@ -391,7 +459,7 @@ Common issues and resolutions:
 - [mcp_builder.dart:516-563](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L516-L563)
 
 ## Conclusion
-Easy MCP simplifies exposing Dart functions as MCP tools by combining a concise annotation system with robust AST-based parsing and template-driven code generation. The framework supports dual transport modes, integrates deeply with Dart's type system, and enables cross-library tool discovery. Beginners can quickly adopt the framework by annotating functions and generating servers, while advanced users benefit from customizable transports, schema generation, and extensible templates.
+Easy MCP simplifies exposing Dart functions as MCP tools by combining a concise annotation system with robust AST-based parsing and template-driven code generation. The framework supports dual transport modes, integrates deeply with Dart's type system, and enables cross-library tool discovery. **The enhanced flexible naming system provides powerful tool organization capabilities through prefix-based domains, automatic class-based namespaces, and customizable naming priorities.** Beginners can quickly adopt the framework by annotating functions and generating servers, while advanced users benefit from customizable transports, schema generation, extensible templates, and sophisticated tool naming strategies.
 
 ## Appendices
 - Getting started:
@@ -401,7 +469,13 @@ Easy MCP simplifies exposing Dart functions as MCP tools by combining a concise 
   - Keep tool descriptions clear and icons accessible for agent UIs.
   - Use nullable types judiciously to reflect optional parameters.
   - Prefer package-local imports for predictable tool discovery.
+  - **Use toolPrefix for domain-based organization (e.g., user_, order_, admin_)**.
+  - **Enable autoClassPrefix for automatic class-based namespace organization**.
+  - **Combine naming strategies for hierarchical tool organization**.
+  - **Use custom tool names to resolve naming conflicts and create descriptive tool identifiers**.
 
 **Section sources**
 - [README.md:20-58](file://README.md#L20-L58)
 - [README.md:79-88](file://README.md#L79-L88)
+- [mcp_annotations.dart:108-119](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L108-L119)
+- [mcp_builder.dart:127-142](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L127-L142)

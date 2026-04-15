@@ -15,14 +15,16 @@
 - [example.dart](file://example/bin/example.dart)
 - [user_store.dart](file://example/lib/src/user_store.dart)
 - [templates_test.dart](file://packages/easy_mcp_generator/test/templates_test.dart)
+- [README.md (generator)](file://packages/easy_mcp_generator/README.md)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Updated version information from 0.2.1 to 0.2.2 for easy_mcp_annotations and easy_mcp_generator packages
-- Updated dependency examples to show ^0.2.2 versioning in README and pubspec files
-- Enhanced documentation links and package information to reflect current versions
-- Maintained all existing functionality documentation while updating version references
+- Updated @Mcp annotation documentation to include the new `toolPrefix` and `autoClassPrefix` parameters
+- Added comprehensive coverage of tool organization and namespace isolation capabilities
+- Enhanced examples showing hierarchical naming schemes and best practices for avoiding collisions
+- Updated parameter validation rules and inheritance behavior to include the new parameters
+- Added practical examples demonstrating transport-specific configurations and their effects on generated server code
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -37,9 +39,9 @@
 10. [Appendices](#appendices)
 
 ## Introduction
-This document explains the @Mcp annotation and its role in configuring MCP server generation. It focuses on transport configuration (McpTransport.stdio vs McpTransport.http), HTTP server configuration with port and address parameters, JSON-RPC protocol setup for stdio, and the generateJson parameter that controls schema metadata generation. It also documents parameter validation, defaults, inheritance behavior, and practical examples of how transport selection affects generated server code.
+This document explains the @Mcp annotation and its role in configuring MCP server generation. It focuses on transport configuration (McpTransport.stdio vs McpTransport.http), HTTP server configuration with port and address parameters, JSON-RPC protocol setup for stdio, and the generateJson parameter that controls schema metadata generation. The documentation now includes the new toolPrefix and autoClassPrefix parameters that provide advanced tool organization and namespace isolation capabilities. It also documents parameter validation, defaults, inheritance behavior, and practical examples of how transport selection affects generated server code.
 
-**Updated** Version 0.2.2 introduces enhanced stability and improved dependency management with updated package versions.
+**Updated** Version 0.2.2 introduces enhanced tool naming capabilities with improved namespace isolation and collision avoidance.
 
 ## Project Structure
 The repository is a Dart workspace with two primary packages:
@@ -74,9 +76,9 @@ F --> A
 ```
 
 **Diagram sources**
-- [mcp_annotations.dart:1-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L241)
+- [mcp_annotations.dart:1-302](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L302)
 - [mcp_generator.dart:1-14](file://packages/easy_mcp_generator/lib/mcp_generator.dart#L1-L14)
-- [mcp_builder.dart:1-834](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L834)
+- [mcp_builder.dart:1-1000](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L1000)
 - [templates.dart:1-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L630)
 - [example.dart:1-67](file://example/bin/example.dart#L1-L67)
 - [user_store.dart:1-158](file://example/lib/src/user_store.dart#L1-L158)
@@ -89,22 +91,25 @@ F --> A
 
 ## Core Components
 - McpTransport enum: stdio (default) and http.
-- @Mcp annotation: configures transport, port, address, and whether to generate JSON metadata.
+- @Mcp annotation: configures transport, port, address, generateJson, toolPrefix, and autoClassPrefix parameters.
 - @Tool annotation: marks functions as MCP tools and supplies metadata.
-- McpBuilder: extracts annotations and generates server code.
+- McpBuilder: extracts annotations and generates server code with advanced tool naming capabilities.
 - Templates: StdioTemplate and HttpTemplate produce runnable server code.
 
 Key behaviors:
 - Transport selection drives which template is used during generation.
+- toolPrefix parameter adds a custom prefix to all tool names in a scope.
+- autoClassPrefix parameter automatically prefixes tool names with their class name.
+- Hierarchical naming: class name prefix is applied before custom tool prefix.
 - generateJson toggles creation of a .mcp.json metadata file.
 - Default transport is stdio when @Mcp is present but transport is unspecified.
 - HTTP transport supports configurable port (default: 3000) and address (default: '127.0.0.1').
 
 **Section sources**
 - [mcp_annotations.dart:10-20](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L10-L20)
-- [mcp_annotations.dart:54-90](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L90)
-- [mcp_annotations.dart:114-140](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L114-L140)
-- [mcp_builder.dart:27-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L77)
+- [mcp_annotations.dart:54-137](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L137)
+- [mcp_annotations.dart:114-119](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L114-L119)
+- [mcp_builder.dart:27-83](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L83)
 - [mcp_builder.dart:59-61](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L59-L61)
 - [mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
 - [templates.dart:15-189](file://packages/easy_mcp_generator/lib/builder/templates.dart#L15-L189)
@@ -116,6 +121,7 @@ The generator runs during build_runner and:
 - Extracts tool metadata and parameter schemas.
 - Chooses a transport template (stdio or http) based on transport parameter.
 - For HTTP transport, extracts port and address configuration for server binding.
+- Applies toolPrefix and autoClassPrefix parameters for advanced tool naming.
 - Writes .mcp.dart and optionally .mcp.json artifacts.
 
 ```mermaid
@@ -130,6 +136,9 @@ MB->>AN : "Scan for @Mcp and @Tool"
 MB->>MB : "_findTransport()"
 MB->>MB : "_findPort()"
 MB->>MB : "_findAddress()"
+MB->>MB : "_findToolPrefix()"
+MB->>MB : "_findAutoClassPrefix()"
+MB->>MB : "_extractAllTools(library, toolPrefix, autoClassPrefix)"
 MB->>TM : "StdioTemplate.generate() or HttpTemplate.generate(port, address)"
 TM-->>MB : "Generated Dart code"
 MB->>OUT : "Write .mcp.dart"
@@ -138,9 +147,11 @@ MB->>OUT : "Write .mcp.json (optional)"
 ```
 
 **Diagram sources**
-- [mcp_builder.dart:34-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L77)
+- [mcp_builder.dart:34-83](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L83)
 - [mcp_builder.dart:59-61](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L59-L61)
 - [mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
+- [mcp_builder.dart:910-937](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L910-L937)
+- [mcp_builder.dart:948-999](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L948-L999)
 - [templates.dart:21-21](file://packages/easy_mcp_generator/lib/builder/templates.dart#L21-L21)
 - [templates.dart:311-315](file://packages/easy_mcp_generator/lib/builder/templates.dart#L311-L315)
 
@@ -170,21 +181,55 @@ Validation and defaults:
 - generateJson: bool. When true, the generator writes a .mcp.json file with tool metadata and input schemas.
 - port: int. HTTP server port (only used when transport is http). Defaults to 3000.
 - address: String. HTTP server bind address (only used when transport is http). Defaults to '127.0.0.1'.
+- toolPrefix: String? (new). Adds a custom prefix to all tool names in this scope.
+- autoClassPrefix: bool (new). Automatically prefixes tool names with their class name.
+
+**Updated** New parameters for advanced tool organization and namespace isolation.
 
 Defaults and validation:
 - transport defaults to stdio when omitted.
 - generateJson defaults to false.
 - port defaults to 3000 for HTTP transport.
 - address defaults to '127.0.0.1' (loopback) for HTTP transport.
+- toolPrefix defaults to null (no prefix).
+- autoClassPrefix defaults to false for backward compatibility.
 - The builder reads the constant values of @Mcp to determine behavior.
 
 Inheritance behavior:
 - The annotation can be applied to libraries, classes, or methods. The generator scans for @Mcp at the library level and uses its parameters to configure the server.
+- Tool naming parameters apply to all tools within the annotated scope.
 
 **Section sources**
-- [mcp_annotations.dart:54-90](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L90)
+- [mcp_annotations.dart:54-137](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L137)
 - [mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
 - [mcp_builder.dart:590](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L590)
+- [mcp_builder.dart:910-937](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L910-L937)
+- [mcp_builder.dart:948-999](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L948-L999)
+
+### Tool Naming and Organization Parameters
+
+#### toolPrefix Parameter
+- Purpose: Adds a custom prefix to all tool names in the annotated scope.
+- Usage: Useful for organizing tools by domain or avoiding naming collisions when aggregating tools from multiple files.
+- Behavior: Applied after custom tool names from @Tool.name but before class name prefixes.
+- Example: `@Mcp(toolPrefix: 'user_service_')` → tool named `createUser` becomes `user_service_createUser`.
+
+#### autoClassPrefix Parameter
+- Purpose: Automatically prefixes tool names with their class name.
+- Usage: Prevents naming collisions when multiple classes have methods with the same name.
+- Behavior: Class name prefix is applied before any custom toolPrefix.
+- Example: `@Mcp(autoClassPrefix: true)` → tool `createUser` in class `UserService` becomes `UserService_createUser`.
+
+#### Hierarchical Naming Scheme
+- Priority order: Class name prefix → Custom tool prefix → Custom tool name → Method name.
+- Example combination: `@Mcp(autoClassPrefix: true, toolPrefix: 'api_')` → `api_UserService_createUser`.
+- Backward compatibility: Defaults to false to maintain existing tool names.
+
+**Section sources**
+- [mcp_annotations.dart:100-119](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L100-L119)
+- [mcp_annotations.dart:127-136](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L127-L136)
+- [mcp_builder.dart:117-156](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L117-L156)
+- [mcp_builder.dart:273-300](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L273-L300)
 
 ### Transport-Specific Configuration Effects
 
@@ -192,6 +237,7 @@ Inheritance behavior:
 - Protocol: JSON-RPC over stdin/stdout.
 - Generated code: Sets up a stdio channel and registers tools in MCPServerWithTools.
 - Typical use case: CLI-based MCP clients and local integration.
+- Tool naming: Applies toolPrefix and autoClassPrefix during tool registration.
 
 ```mermaid
 flowchart TD
@@ -201,8 +247,12 @@ CheckMcp --> |Yes| FindTransport["_findTransport()"]
 FindTransport --> IsHttp{"transport == 'http'?"}
 IsHttp --> |Yes| FindPort["_findPort()"]
 IsHttp --> |Yes| FindAddress["_findAddress()"]
+IsHttp --> |Yes| FindPrefixes["_findToolPrefix() & _findAutoClassPrefix()"]
 IsHttp --> |Yes| UseHttp["HttpTemplate.generate(port, address)"]
+IsHttp --> |No| FindPrefixes2["_findToolPrefix() & _findAutoClassPrefix()"]
 IsHttp --> |No| UseStdio["StdioTemplate.generate()"]
+FindPrefixes --> UseStdio
+FindPrefixes2 --> UseStdio
 UseStdio --> WriteDart[".mcp.dart written"]
 UseHttp --> WriteDart
 WriteDart --> MaybeJson["_shouldGenerateJson()?"]
@@ -212,9 +262,11 @@ WriteJson --> Done
 ```
 
 **Diagram sources**
-- [mcp_builder.dart:34-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L77)
+- [mcp_builder.dart:34-83](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L83)
 - [mcp_builder.dart:59-61](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L59-L61)
 - [mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
+- [mcp_builder.dart:910-937](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L910-L937)
+- [mcp_builder.dart:948-999](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L948-L999)
 - [templates.dart:21-21](file://packages/easy_mcp_generator/lib/builder/templates.dart#L21-L21)
 - [templates.dart:311-315](file://packages/easy_mcp_generator/lib/builder/templates.dart#L311-L315)
 
@@ -224,6 +276,7 @@ WriteJson --> Done
 - Typical use case: Remote clients connecting via HTTP.
 - Port configuration: Uses the configured port parameter (default: 3000).
 - Address configuration: Uses the configured address parameter (default: '127.0.0.1').
+- Tool naming: Applies toolPrefix and autoClassPrefix during tool registration.
 
 HTTP server specifics visible in generated code:
 - Conditional import of dart:io only when using the default loopback address ('127.0.0.1').
@@ -239,6 +292,7 @@ HTTP server specifics visible in generated code:
 ### JSON Metadata Generation (generateJson)
 - When generateJson is true, the builder generates a .mcp.json file containing schemaVersion and tools with inputSchema and required fields derived from parameter introspection.
 - The JSON schema is built from parameter types and optionality.
+- Tool names in metadata reflect the final naming after applying toolPrefix and autoClassPrefix.
 
 **Section sources**
 - [mcp_annotations.dart:60-64](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L60-L64)
@@ -254,11 +308,23 @@ References:
 - [example.dart:6-6](file://example/bin/example.dart#L6-L6)
 - [user_store.dart:55-65](file://example/lib/src/user_store.dart#L55-L65)
 
-#### Example: @Mcp on a class
-- Apply @Mcp to a class to configure transport for all methods within that class that are annotated with @Tool.
+#### Example: @Mcp on a class with toolPrefix
+- Apply @Mcp to a class with toolPrefix to add a domain-specific prefix to all tools in that class.
 
 References:
-- [user_store.dart:9-9](file://example/lib/src/user_store.dart#L9-L9)
+- [mcp_annotations.dart:60-66](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L60-L66)
+
+#### Example: @Mcp on a class with autoClassPrefix
+- Apply @Mcp to a class with autoClassPrefix to automatically include the class name as a prefix for all tools.
+
+References:
+- [mcp_annotations.dart:68-75](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L68-L75)
+
+#### Example: @Mcp on a class with both toolPrefix and autoClassPrefix
+- Combine both parameters for hierarchical naming: `api_UserService_createUser`.
+
+References:
+- [mcp_annotations.dart:150-158](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L150-L158)
 
 #### Example: @Mcp on a method
 - Apply @Mcp to a method to configure transport for that specific method's tool registration.
@@ -283,10 +349,12 @@ References:
 - generateJson: Accepts boolean; defaults to false.
 - port: Integer port number for HTTP transport; defaults to 3000 when omitted.
 - address: String bind address for HTTP transport; defaults to '127.0.0.1' when omitted.
+- toolPrefix: String? accepts any string; defaults to null (no prefix).
+- autoClassPrefix: bool accepts boolean; defaults to false for backward compatibility.
 - Inheritance: The generator scans for @Mcp at the library level and uses its parameters to drive generation.
 
 **Section sources**
-- [mcp_annotations.dart:54-90](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L90)
+- [mcp_annotations.dart:54-137](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L137)
 - [mcp_annotation_test.dart:6-19](file://packages/easy_mcp_annotations/test/mcp_annotation_test.dart#L6-L19)
 - [mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
 
@@ -323,6 +391,7 @@ EX --> SH
 - HTTP transport introduces HTTP parsing and JSON serialization overhead but enables remote clients.
 - JSON metadata generation adds disk I/O and JSON encoding work; enable generateJson only when needed.
 - HTTP server performance depends on port availability and network interface binding.
+- Tool naming computation occurs during build time and has negligible runtime impact.
 
 ## Troubleshooting Guide
 Common issues and resolutions:
@@ -354,15 +423,26 @@ Common issues and resolutions:
 - Tool not registered:
   - Ensure methods are annotated with @Tool and are accessible (static or properly scoped) so the builder can extract them.
 
+- Tool naming conflicts:
+  - Use toolPrefix to add domain-specific prefixes.
+  - Use autoClassPrefix to automatically include class names.
+  - Combine both parameters for hierarchical naming schemes.
+
+- Tool names not appearing as expected:
+  - Remember the naming priority: Class name → Custom prefix → Custom tool name → Method name.
+  - Check that toolPrefix is not empty string (empty string is treated as no prefix).
+  - Verify autoClassPrefix is set to true when expecting class name prefixes.
+
 **Section sources**
-- [mcp_builder.dart:34-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L77)
+- [mcp_builder.dart:34-83](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L83)
 - [mcp_builder.dart:626-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L626-L734)
+- [mcp_builder.dart:117-156](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L117-L156)
 - [templates_test.dart:170-183](file://packages/easy_mcp_generator/test/templates_test.dart#L170-L183)
 
 ## Conclusion
-The @Mcp annotation provides a concise way to configure MCP server generation, selecting between stdio and HTTP transports and controlling JSON metadata generation. The addition of port and address parameters enhances HTTP transport flexibility, allowing precise control over server binding. Understanding how transport selection and configuration parameters influence generated code helps you choose the right mode for your deployment scenario and troubleshoot runtime issues effectively.
+The @Mcp annotation provides a concise way to configure MCP server generation, selecting between stdio and HTTP transports and controlling JSON metadata generation. The addition of toolPrefix and autoClassPrefix parameters significantly enhances tool organization and namespace isolation capabilities. These new parameters enable sophisticated naming schemes that prevent collisions and improve tool discoverability. Understanding how transport selection and configuration parameters influence generated code helps you choose the right mode for your deployment scenario and troubleshoot runtime issues effectively.
 
-**Updated** Version 0.2.2 ensures stable package dependencies and improved compatibility with the latest Dart ecosystem.
+**Updated** Version 0.2.2 ensures stable package dependencies and improved compatibility with the latest Dart ecosystem, now including advanced tool naming capabilities.
 
 ## Appendices
 
@@ -371,23 +451,40 @@ The @Mcp annotation provides a concise way to configure MCP server generation, s
 - Use http for remote clients, web dashboards, or environments requiring HTTP connectivity.
 - For production deployments, consider using non-loopback addresses and appropriate ports.
 
+### Advanced Tool Naming Strategies
+- Domain organization: Use toolPrefix to group tools by domain (e.g., 'user_', 'order_', 'admin_').
+- Module isolation: Use autoClassPrefix to automatically include class names as namespaces.
+- Hierarchical schemes: Combine both parameters for complex naming (e.g., 'api_UserService_createUser').
+- Collision prevention: Enable autoClassPrefix when aggregating tools from multiple files.
+- Backward compatibility: Keep autoClassPrefix false for existing projects to maintain current tool names.
+
 ### Common Configuration Patterns
 - Library-level @Mcp with @Tool on static methods for straightforward tool exposure.
-- Class-level @Mcp to scope transport for a module of tools.
+- Class-level @Mcp to scope transport for a module of tools with custom naming.
 - Method-level @Mcp for selective overrides when mixing transports within a library.
 - HTTP transport with custom port and address for containerized deployments.
+- Tool organization with domain-specific prefixes for large applications.
+- Namespace isolation with automatic class prefixes for modular architectures.
 
 ### Parameter Reference
 - transport: McpTransport (stdio | http)
 - generateJson: bool
 - port: int (HTTP transport only, default: 3000)
 - address: String (HTTP transport only, default: '127.0.0.1')
+- toolPrefix: String? (new, default: null)
+- autoClassPrefix: bool (new, default: false)
 
 ### HTTP Transport Configuration Examples
 - Default HTTP configuration: `@Mcp(transport: McpTransport.http)` → binds to 127.0.0.1:3000
 - Custom port: `@Mcp(transport: McpTransport.http, port: 8080)` → binds to 127.0.0.1:8080
 - Remote access: `@Mcp(transport: McpTransport.http, address: '0.0.0.0')` → binds to 0.0.0.0:3000
 - Custom configuration: `@Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0')` → binds to 0.0.0.0:8080
+
+### Tool Naming Examples
+- Basic tool prefix: `@Mcp(toolPrefix: 'user_')` → tools named `user_createUser`, `user_deleteUser`
+- Auto class prefix: `@Mcp(autoClassPrefix: true)` → tools named `UserService_createUser`, `TodoService_createTodo`
+- Combined prefixes: `@Mcp(toolPrefix: 'api_', autoClassPrefix: true)` → tools named `api_UserService_createUser`
+- Custom tool names override: `@Tool(name: 'custom_name')` → tool named `custom_name` regardless of prefixes
 
 ### Dependency Management Best Practices
 - Keep easy_mcp_annotations as a separate package dependency for annotation definitions.
@@ -406,10 +503,12 @@ The @Mcp annotation provides a concise way to configure MCP server generation, s
 **Updated** Version 0.2.2 dependency examples show the latest package versions for optimal compatibility.
 
 **Section sources**
-- [mcp_annotations.dart:54-90](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L90)
-- [mcp_builder.dart:27-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L77)
+- [mcp_annotations.dart:54-137](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L137)
+- [mcp_builder.dart:27-83](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L83)
+- [mcp_builder.dart:117-156](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L117-L156)
 - [templates_test.dart:150-183](file://packages/easy_mcp_generator/test/templates_test.dart#L150-L183)
 - [pubspec.yaml (annotations):11-13](file://packages/easy_mcp_annotations/pubspec.yaml#L11-L13)
 - [pubspec.yaml (generator):10-19](file://packages/easy_mcp_generator/pubspec.yaml#L10-L19)
 - [pubspec.yaml (example):11-16](file://example/pubspec.yaml#L11-L16)
 - [README.md:24-31](file://README.md#L24-L31)
+- [README.md (generator):124-182](file://packages/easy_mcp_generator/README.md#L124-L182)

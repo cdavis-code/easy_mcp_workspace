@@ -97,18 +97,19 @@ class StdioTemplate {
           final sourceAlias = t['sourceAlias'] as String? ?? 'lib';
 
           String call;
+          final methodName = t['methodName'] as String? ?? name;
           if (className != null && isStatic) {
             call = isAsync
-                ? 'await $sourceAlias.$className.$name(${_callArgsWithConversion(params)})'
-                : '$sourceAlias.$className.$name(${_callArgsWithConversion(params)})';
+                ? 'await $sourceAlias.$className.$methodName(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$className.$methodName(${_callArgsWithConversion(params)})';
           } else if (className != null) {
             call = isAsync
-                ? 'await $sourceAlias.$className().$name(${_callArgsWithConversion(params)})'
-                : '$sourceAlias.$className().$name(${_callArgsWithConversion(params)})';
+                ? 'await $sourceAlias.$className().$methodName(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$className().$methodName(${_callArgsWithConversion(params)})';
           } else {
             call = isAsync
-                ? 'await $sourceAlias.$name(${_callArgsWithConversion(params)})'
-                : '$sourceAlias.$name(${_callArgsWithConversion(params)})';
+                ? 'await $sourceAlias.$methodName(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$methodName(${_callArgsWithConversion(params)})';
           }
 
           return '''
@@ -396,18 +397,19 @@ class HttpTemplate {
           final sourceAlias = t['sourceAlias'] as String? ?? 'lib';
 
           String call;
+          final methodName = t['methodName'] as String? ?? name;
           if (className != null && isStatic) {
             call = isAsync
-                ? 'await $sourceAlias.$className.$name(${_callArgsWithConversion(params)})'
-                : '$sourceAlias.$className.$name(${_callArgsWithConversion(params)})';
+                ? 'await $sourceAlias.$className.$methodName(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$className.$methodName(${_callArgsWithConversion(params)})';
           } else if (className != null) {
             call = isAsync
-                ? 'await $sourceAlias.$className().$name(${_callArgsWithConversion(params)})'
-                : '$sourceAlias.$className().$name(${_callArgsWithConversion(params)})';
+                ? 'await $sourceAlias.$className().$methodName(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$className().$methodName(${_callArgsWithConversion(params)})';
           } else {
             call = isAsync
-                ? 'await $sourceAlias.$name(${_callArgsWithConversion(params)})'
-                : '$sourceAlias.$name(${_callArgsWithConversion(params)})';
+                ? 'await $sourceAlias.$methodName(${_callArgsWithConversion(params)})'
+                : '$sourceAlias.$methodName(${_callArgsWithConversion(params)})';
           }
 
           return '''
