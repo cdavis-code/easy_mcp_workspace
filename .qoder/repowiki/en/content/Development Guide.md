@@ -4,9 +4,12 @@
 **Referenced Files in This Document**
 - [README.md](file://README.md)
 - [pubspec.yaml](file://pubspec.yaml)
+- [CHANGELOG.md](file://CHANGELOG.md)
 - [packages/easy_mcp_annotations/pubspec.yaml](file://packages/easy_mcp_annotations/pubspec.yaml)
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
+- [packages/easy_mcp_annotations/CHANGELOG.md](file://packages/easy_mcp_annotations/CHANGELOG.md)
 - [packages/easy_mcp_generator/pubspec.yaml](file://packages/easy_mcp_generator/pubspec.yaml)
+- [packages/easy_mcp_generator/CHANGELOG.md](file://packages/easy_mcp_generator/CHANGELOG.md)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 - [packages/easy_mcp_generator/README.md](file://packages/easy_mcp_generator/README.md)
 - [packages/easy_mcp_generator/build.yaml](file://packages/easy_mcp_generator/build.yaml)
 - [packages/easy_mcp_generator/lib/mcp_generator.dart](file://packages/easy_mcp_generator/lib/mcp_generator.dart)
@@ -19,17 +22,15 @@
 - [packages/easy_mcp_generator/test/templates_test.dart](file://packages/easy_mcp_generator/test/templates_test.dart)
 - [example/pubspec.yaml](file://example/pubspec.yaml)
 - [example/bin/example.dart](file://example/bin/example.dart)
-- [CHANGELOG.md](file://CHANGELOG.md)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Updated version information to reflect 0.2.0 release across all packages
-- Added comprehensive @Parameter annotation documentation and best practices
-- Enhanced publishing workflow with detailed checklist and security guidelines
-- Expanded development commands with new Melos scripts for improved workflow
-- Updated testing strategies with coverage reporting and quality gates
-- Improved version management procedures for coordinated package releases
+- Updated version information to reflect 0.2.2 release across all Easy MCP packages
+- Updated package version references throughout the documentation to match current state
+- Enhanced version management documentation to reflect improved dependency practices
+- Updated release procedures to reflect current version numbering scheme
+- Corrected all version references from 0.2.0 to 0.2.2 in development workflows
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -50,7 +51,7 @@
 16. [Conclusion](#conclusion)
 
 ## Introduction
-This development guide explains how to build, test, and contribute to the Easy MCP framework. It covers workspace management with Melos, the build system powered by build_runner, testing strategies, development environment setup, contribution workflows, and extension patterns for maintainers and extension developers. The framework has been updated to version 0.2.0 with enhanced @Parameter annotation support and comprehensive publishing procedures.
+This development guide explains how to build, test, and contribute to the Easy MCP framework. It covers workspace management with Melos, the build system powered by build_runner, testing strategies, development environment setup, contribution workflows, and extension patterns for maintainers and extension developers. The framework is currently at version 0.2.2 with enhanced @Parameter annotation support and comprehensive publishing procedures.
 
 ## Project Structure
 The repository is a Melos-managed workspace with three primary parts:
@@ -62,8 +63,8 @@ The repository is a Melos-managed workspace with three primary parts:
 ```mermaid
 graph TB
 Root["Workspace Root<br/>Melos scripts and pubspec"]
-Ann["Package: easy_mcp_annotations<br/>Version 0.2.0<br/>Annotations and enums"]
-Gen["Package: easy_mcp_generator<br/>Version 0.2.0<br/>Build runner generator"]
+Ann["Package: easy_mcp_annotations<br/>Version 0.2.2<br/>Annotations and enums"]
+Gen["Package: easy_mcp_generator<br/>Version 0.2.2<br/>Build runner generator"]
 Ex["Example App<br/>Usage demonstration"]
 Root --> Ann
 Root --> Gen
@@ -79,7 +80,7 @@ Gen --> Ann
 
 **Section sources**
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
-- [README.md:1-120](file://README.md#L1-L120)
+- [README.md:1-168](file://README.md#L1-L168)
 
 ## Core Components
 - Annotations package: Defines McpTransport and annotations such as Mcp and Tool used to mark methods and libraries for MCP exposure. Now includes comprehensive @Parameter annotation support for enhanced parameter metadata.
@@ -236,8 +237,8 @@ The workspace coordinates three packages with explicit interdependencies and Mel
 ```mermaid
 graph LR
 WS["Workspace pubspec.yaml"]
-AN["easy_mcp_annotations 0.2.0"]
-EG["easy_mcp_generator 0.2.0"]
+AN["easy_mcp_annotations 0.2.2"]
+EG["easy_mcp_generator 0.2.2"]
 EX["example"]
 WS --> AN
 WS --> EG
@@ -292,7 +293,7 @@ Common issues and resolutions:
 - Debugging: Use your IDE's debugger to launch example/bin/example.dart or attach to generated server processes.
 
 **Section sources**
-- [README.md:85-109](file://README.md#L85-L109)
+- [README.md:135-168](file://README.md#L135-L168)
 - [pubspec.yaml:5-7](file://pubspec.yaml#L5-L7)
 
 ## Testing Strategy
@@ -389,14 +390,19 @@ McpBuilder --> Templates : "renders"
 - [packages/easy_mcp_generator/lib/builder/templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 
 ## Release and Version Management
-- Versioning: Both packages declare version 0.2.0; update versions consistently across related packages.
+- Versioning: Both packages declare version 0.2.2; update versions consistently across related packages.
 - Publishing: Use Melos scripts to dry-run and publish packages in the correct order.
 - Dependency updates: Use melos run upgrade and melos run outdated to manage dependency health.
+- Version alignment: All packages maintain the same version number (0.2.2) to ensure compatibility.
+
+**Updated** Version management now reflects the current 0.2.2 release with improved dependency alignment and consistent versioning across all packages.
 
 **Section sources**
 - [pubspec.yaml:40-54](file://pubspec.yaml#L40-L54)
 - [packages/easy_mcp_annotations/pubspec.yaml:3](file://packages/easy_mcp_annotations/pubspec.yaml#L3)
 - [packages/easy_mcp_generator/pubspec.yaml:3](file://packages/easy_mcp_generator/pubspec.yaml#L3)
+- [packages/easy_mcp_annotations/CHANGELOG.md:10-18](file://packages/easy_mcp_annotations/CHANGELOG.md#L10-L18)
+- [packages/easy_mcp_generator/CHANGELOG.md:10-18](file://packages/easy_mcp_generator/CHANGELOG.md#L10-L18)
 
 ## Security Guidelines
 - Parameter validation: Use @Parameter annotation with pattern, minimum, and maximum fields for input sanitization.
@@ -410,4 +416,4 @@ McpBuilder --> Templates : "renders"
 - [packages/easy_mcp_generator/README.md:62-106](file://packages/easy_mcp_generator/README.md#L62-L106)
 
 ## Conclusion
-This guide outlined how to develop, test, and contribute to the Easy MCP framework version 0.2.0. By leveraging Melos for workspace management, build_runner for code generation, and a clear separation of concerns between annotations and generators, contributors can reliably extend the framework and add new capabilities while maintaining high-quality standards. The enhanced @Parameter annotation support provides comprehensive parameter metadata and validation capabilities for building secure and user-friendly MCP tools.
+This guide outlined how to develop, test, and contribute to the Easy MCP framework version 0.2.2. By leveraging Melos for workspace management, build_runner for code generation, and a clear separation of concerns between annotations and generators, contributors can reliably extend the framework and add new capabilities while maintaining high-quality standards. The enhanced @Parameter annotation support provides comprehensive parameter metadata and validation capabilities for building secure and user-friendly MCP tools. The current version 0.2.2 represents a stable release with improved dependency management and consistent versioning across all packages.

@@ -38,6 +38,10 @@ enum McpTransport {
 /// Only used when [transport] is [McpTransport.http].
 /// Defaults to 'localhost'. Use '0.0.0.0' to listen on all interfaces.
 ///
+/// The [toolPrefix] parameter adds a prefix to all tool names in this
+/// scope. Useful for organizing tools by domain or avoiding naming
+/// collisions when aggregating tools from multiple files.
+///
 /// Example:
 /// ```dart
 /// @Mcp(transport: McpTransport.stdio)
@@ -50,6 +54,15 @@ enum McpTransport {
 /// @Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0')
 /// @Tool(description: 'Create users')
 /// Future<bool> createUsers(List<User> users) async { ... }
+/// ```
+///
+/// Example with tool prefix:
+/// ```dart
+/// @Mcp(transport: McpTransport.stdio, toolPrefix: 'user_service_')
+/// class UserService {
+///   @Tool(description: 'Create user')
+///   Future<User> createUser() async { ... }  // Tool name: user_service_createUser
+/// }
 /// ```
 class Mcp {
   /// The transport protocol used by the generated MCP server.
@@ -75,17 +88,27 @@ class Mcp {
   /// Defaults to '127.0.0.1' (loopback). Use '0.0.0.0' to listen on all interfaces.
   final String address;
 
+  /// Optional prefix for all tool names in this scope.
+  ///
+  /// When specified, this prefix is prepended to each tool name.
+  /// Useful for organizing tools by domain (e.g., 'user_', 'order_')
+  /// or avoiding collisions when aggregating tools from multiple sources.
+  /// The prefix is applied after any custom name from @Tool.name.
+  final String? toolPrefix;
+
   /// Creates an MCP configuration annotation.
   ///
   /// [transport] determines the communication protocol (stdio or HTTP).
   /// [generateJson] controls whether to generate additional JSON metadata.
   /// [port] specifies the HTTP server port (default: 3000).
   /// [address] specifies the HTTP bind address (default: '127.0.0.1').
+  /// [toolPrefix] adds a prefix to all tool names in this scope.
   const Mcp({
     this.transport = McpTransport.stdio,
     this.generateJson = false,
     this.port = 3000,
     this.address = '127.0.0.1',
+    this.toolPrefix,
   });
 }
 
@@ -93,6 +116,11 @@ class Mcp {
 ///
 /// Apply this annotation to methods that should be exposed as tools
 /// in the generated MCP server. Each tool becomes callable by MCP clients.
+///
+/// The [name] parameter allows specifying a custom tool name. If not provided,
+/// the method name is used. This is useful for avoiding naming collisions
+/// when multiple classes have methods with the same name, or for creating
+/// more descriptive tool names.
 ///
 /// The [description] provides a human-readable explanation of what
 /// the tool does. If not provided, the generator will use the method's
@@ -104,6 +132,7 @@ class Mcp {
 /// Example:
 /// ```dart
 /// @Tool(
+///   name: 'user_create',
 ///   description: 'Creates a new user in the system',
 ///   icons: ['https://example.com/user-icon.png'],
 /// )
@@ -112,6 +141,13 @@ class Mcp {
 /// }
 /// ```
 class Tool {
+  /// Optional custom name for this tool.
+  ///
+  /// If provided, this name is used instead of the method name.
+  /// Useful for avoiding naming collisions or creating more descriptive
+  /// tool names. Must be unique within the MCP server.
+  final String? name;
+
   /// Optional text describing what this tool does.
   ///
   /// If not provided, the generator will use the method's dartdoc comment.
@@ -133,10 +169,11 @@ class Tool {
 
   /// Creates a Tool annotation.
   ///
+  /// [name] - Optional custom tool name (defaults to method name).
   /// [description] - Human-readable description of the tool's purpose.
   /// [icons] - Optional list of icon URLs for visual identification.
   /// [execution] - Deprecated, will be implemented in a future version.
-  const Tool({this.description, this.icons, this.execution});
+  const Tool({this.name, this.description, this.icons, this.execution});
 }
 
 /// Annotation to provide rich metadata for individual parameters in a Tool.

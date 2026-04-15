@@ -19,12 +19,12 @@
 
 ## Update Summary
 **Changes Made**
-- Added comprehensive @Parameter annotation documentation with all supported metadata fields
-- Updated version references to 0.2.0 across all documentation
-- Enhanced parameter reference with complete data types, validation features, and practical examples
-- Added detailed coverage of parameter validation features including minimum/maximum values, pattern matching, and enum constraints
-- Expanded practical examples showing @Parameter usage in real-world scenarios
-- Updated architecture diagrams to reflect parameter metadata processing pipeline
+- Enhanced @Parameter annotation documentation with comprehensive metadata and validation capabilities
+- Updated version references to 0.2.1 across all documentation
+- Added detailed coverage of pattern validation, enum restrictions, and sensitive data handling
+- Expanded practical examples showing @Parameter usage with validation features
+- Updated architecture diagrams to reflect enhanced parameter metadata processing pipeline
+- Added comprehensive validation rules and type handling documentation
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -48,7 +48,7 @@ This document provides a comprehensive reference for Easy MCP's annotation syste
 - Advanced usage patterns, best practices, and common mistakes
 - How annotations integrate with the code generation pipeline and affect schema generation
 
-**Updated** Version 0.2.0 introduces comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation and validation capabilities.
+**Updated** Version 0.2.1 introduces comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation and validation capabilities including pattern validation, enum restrictions, and sensitive data handling.
 
 ## Project Structure
 The annotation system spans two packages:
@@ -64,11 +64,11 @@ subgraph "Generator"
 B["mcp_generator.dart<br/>Exports builder"]
 C["mcp_builder.dart<br/>AST parsing, tool extraction,<br/>parameter metadata extraction,<br/>transport selection, JSON metadata"]
 D["templates.dart<br/>Stdio and HTTP server templates"]
-E["schema_builder.dart<br/>Dart type to JSON Schema mapping"]
+E["schema_builder.dart<br/>Dart type to JSON Schema mapping<br/>with enhanced parameter validation"]
 end
 subgraph "Example"
 F["example.dart<br/>@Mcp(transport: http) on main()"]
-G["user_store.dart<br/>@Tool(...) with @Parameter annotations"]
+G["user_store.dart<br/>@Tool(...) with @Parameter annotations<br/>including validation features"]
 H["todo_store.dart<br/>@Tool(...) on static methods"]
 end
 A --> B
@@ -127,24 +127,26 @@ H --> C
     - minimum: num? (minimum value for numeric types)
     - maximum: num? (maximum value for numeric types)
     - pattern: string? (regex pattern for string validation)
-    - sensitive: bool (whether parameter contains sensitive data)
+    - sensitive: bool (default false, whether parameter contains sensitive data)
     - enumValues: List<Object?>? (allowed values for enum-like parameters)
   - Behavior:
     - Enhances parameter presentation in MCP clients
     - Enables client-side validation and input assistance
     - Supports sensitive data masking in client UIs
+    - Provides comprehensive validation rules for parameter inputs
 
 **Section sources**
 - [mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
 ## Architecture Overview
-The annotation-driven pipeline now includes comprehensive parameter metadata processing:
+The annotation-driven pipeline now includes comprehensive parameter metadata processing with validation capabilities:
 1. Annotations are parsed from source using analyzer and source_gen
 2. Tools and parameter metadata are discovered across the library and its package-local imports
 3. Transport is determined from @Mcp on library or elements
 4. Templates generate either stdio or HTTP server code with enhanced parameter metadata
 5. Optional JSON metadata is produced when requested, including parameter validation rules
+6. Parameter validation rules are embedded in both generated schemas and metadata
 
 ```mermaid
 sequenceDiagram
@@ -152,15 +154,18 @@ participant Dev as "Developer"
 participant Gen as "McpBuilder"
 participant Lib as "Library AST"
 participant ParamMeta as "Parameter Metadata Extractor"
+participant Validator as "Validation Rules Processor"
 participant Tmpl as "Templates"
 participant Out as "Generated Artifacts"
 Dev->>Gen : "build_runner runs"
 Gen->>Lib : "Resolve library and scan for @Mcp/@Tool/@Parameter"
 Lib-->>Gen : "Tool definitions + parameter metadata"
 Gen->>ParamMeta : "Extract @Parameter annotations"
-ParamMeta-->>Gen : "Rich parameter metadata"
+ParamMeta-->>Gen : "Rich parameter metadata with validation rules"
+Gen->>Validator : "Process validation constraints"
+Validator-->>Gen : "Normalized validation rules"
 Gen->>Gen : "Select transport (HTTP vs stdio)"
-Gen->>Tmpl : "Render server code with parameter metadata"
+Gen->>Tmpl : "Render server code with enhanced metadata"
 Tmpl-->>Out : ".mcp.dart (server with enhanced metadata)"
 Gen->>Gen : "Check generateJson flag"
 Gen-->>Out : ".mcp.json (metadata with validation rules)"
@@ -294,7 +299,7 @@ Gen-->>Out : ".mcp.json (metadata with validation rules)"
 - [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 
 ### Practical Examples and Effects
-**Updated** Examples now demonstrate comprehensive @Parameter usage patterns.
+**Updated** Examples now demonstrate comprehensive @Parameter usage patterns with validation features.
 
 - Example A: HTTP server with explicit transport
   - Annotation: @Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0') on main()
@@ -498,4 +503,4 @@ Builder --> Sb["schema_builder.dart"]
 - [mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
 
 ## Conclusion
-Easy MCP's annotation system offers a concise and powerful way to expose Dart functions as MCP tools. Version 0.2.0 significantly enhances the system with comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation, validation, and user experience improvements. By combining @Mcp for transport configuration, @Tool for metadata, and @Parameter for detailed parameter information, developers can quickly generate transport-ready servers with sophisticated parameter handling and accurate JSON schemas. Following the best practices and understanding precedence rules ensures predictable and maintainable code generation with enhanced user experience capabilities.
+Easy MCP's annotation system offers a concise and powerful way to expose Dart functions as MCP tools. Version 0.2.1 significantly enhances the system with comprehensive parameter metadata support through the @Parameter annotation, enabling rich client-side parameter presentation, validation, and user experience improvements. The enhanced @Parameter annotation now provides complete validation capabilities including pattern validation, enum restrictions, and sensitive data handling, making it a powerful tool for creating robust and user-friendly MCP integrations. By combining @Mcp for transport configuration, @Tool for metadata, and @Parameter for detailed parameter information, developers can quickly generate transport-ready servers with sophisticated parameter handling and accurate JSON schemas. Following the best practices and understanding precedence rules ensures predictable and maintainable code generation with enhanced user experience capabilities.

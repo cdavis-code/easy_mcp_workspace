@@ -23,6 +23,7 @@
 - Updated Server Lifecycle Management to include proper cleanup procedures
 - Enhanced Practical Examples with dynamic configuration scenarios for various deployment environments
 - Added comprehensive security considerations for Docker and remote access deployments
+- Added automatic JSON metadata generation capability with .mcp.json file output
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -38,12 +39,13 @@
 11. [Conclusion](#conclusion)
 
 ## Introduction
-This document explains the HTTP transport implementation for Easy MCP's web-based communication system. It covers how the Shelf framework integrates with the MCP server to enable HTTP-based tool invocation, the bidirectional streaming architecture using StreamController and StreamChannel, comprehensive port configuration and address binding capabilities, server lifecycle management, template generation for HTTP endpoints, response buffering with completer queues, and practical guidance for testing, monitoring, error handling, and performance optimization across various deployment scenarios including Docker containers and remote access environments.
+This document explains the HTTP transport implementation for Easy MCP's web-based communication system. It covers how the Shelf framework integrates with the MCP server to enable HTTP-based tool invocation, the bidirectional streaming architecture using StreamController and StreamChannel, comprehensive port configuration and address binding capabilities, server lifecycle management, template generation for HTTP endpoints, response buffering with completer queues, automatic JSON metadata generation, and practical guidance for testing, monitoring, error handling, and performance optimization across various deployment scenarios including Docker containers and remote access environments.
 
 ## Project Structure
 The repository provides:
 - Annotations and generator for building HTTP or stdio MCP servers with dynamic configuration
 - Example application demonstrating HTTP transport usage with configurable port and address
+- Automatic JSON metadata generation for tool schemas and descriptions
 - Tests validating the generated HTTP server template with dynamic settings
 
 ```mermaid
@@ -62,9 +64,12 @@ F["user_store.dart"]
 G["todo_store.dart"]
 H["example.dart<br/>@Mcp transport config"]
 end
+subgraph "Metadata"
+I["example.mcp.json<br/>Automatic JSON schemas"]
+end
 subgraph "Docs"
-I["README.md"]
-J["example/pubspec.yaml"]
+J["README.md"]
+K["example/pubspec.yaml"]
 end
 A --> B
 B --> C
@@ -73,23 +78,24 @@ D --> C
 F --> E
 G --> E
 H --> E
-I --> J
+B --> I
+J --> K
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L141)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L738)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L241)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-834](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L834)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:282-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L282-L630)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
-- [example/bin/example.mcp.dart:1-490](file://example/bin/example.mcp.dart#L1-L490)
+- [example/bin/example.mcp.dart:1-500](file://example/bin/example.mcp.dart#L1-L500)
 - [example/bin/example.dart:6](file://example/bin/example.dart#L6)
-- [example/lib/src/user_store.dart:1-144](file://example/lib/src/user_store.dart#L1-L144)
+- [example/lib/src/user_store.dart:1-158](file://example/lib/src/user_store.dart#L1-L158)
 - [example/lib/src/todo_store.dart:1-236](file://example/lib/src/todo_store.dart#L1-L236)
-- [README.md:1-124](file://README.md#L1-L124)
+- [README.md:1-168](file://README.md#L1-L168)
 - [example/pubspec.yaml:1-22](file://example/pubspec.yaml#L1-L22)
 
 **Section sources**
-- [README.md:1-124](file://README.md#L1-L124)
+- [README.md:1-168](file://README.md#L1-L168)
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
 
 ## Core Components
@@ -97,14 +103,16 @@ I --> J
 - The generator performs sophisticated transport detection and extracts configuration parameters from annotations.
 - The HttpTemplate generates Shelf-based HTTP servers with dynamic port and address binding.
 - The example demonstrates HTTP transport with configurable port (8080) and address ('0.0.0.0').
+- Automatic JSON metadata generation creates .mcp.json files with tool schemas and descriptions.
 
 Key responsibilities:
 - McpTransport enum selects HTTP transport with dynamic configuration support.
 - McpBuilder performs transport detection and extracts port/address from annotations.
 - HttpTemplate generates dynamic server code with configurable port and address binding.
 - Example server demonstrates HTTP transport with custom port and address configuration.
+- Automatic JSON metadata generation provides tool schemas for external clients.
 
-**Updated** Enhanced transport detection and dynamic configuration capabilities with comprehensive port customization
+**Updated** Enhanced transport detection and dynamic configuration capabilities with comprehensive port customization and automatic JSON metadata generation
 
 **Section sources**
 - [packages/easy_mcp_annotations/lib/mcp_annotations.dart:9-90](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L9-L90)
@@ -113,7 +121,7 @@ Key responsibilities:
 - [example/bin/example.dart:6](file://example/bin/example.dart#L6)
 
 ## Architecture Overview
-The HTTP transport architecture connects incoming HTTP requests to the MCP server via a bidirectional stream with dynamic configuration support. The Shelf handler validates the request, forwards the payload to the MCP server through a StreamChannel, and returns the serialized response.
+The HTTP transport architecture connects incoming HTTP requests to the MCP server via a bidirectional stream with dynamic configuration support. The Shelf handler validates the request, forwards the payload to the MCP server through a StreamChannel, and returns the serialized response. The system now includes automatic JSON metadata generation for enhanced tool discovery and schema validation.
 
 ```mermaid
 graph TB
@@ -125,6 +133,7 @@ Channel["StreamChannel<String>"]
 MCP["MCPServerWithTools"]
 Queue["Response Queue<br/>List<Completer<String>>"]
 Config["Dynamic Config<br/>Port & Address"]
+Metadata["JSON Metadata<br/>.mcp.json"]
 Client --> Shelf
 Shelf --> Config
 Config --> Shelf
@@ -135,6 +144,7 @@ MCP --> SC2
 SC2 --> Shelf
 Shelf --> Queue
 Queue --> Shelf
+MCP --> Metadata
 ```
 
 **Diagram sources**
@@ -373,23 +383,48 @@ SchemaBuilder --> MCPServerWithTools : "builds input schemas"
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:503-536](file://packages/easy_mcp_generator/lib/builder/templates.dart#L503-L536)
 
+### Automatic JSON Metadata Generation
+- The generator can produce .mcp.json files containing complete tool metadata and JSON schemas.
+- Metadata includes tool names, descriptions, parameter schemas, and required fields.
+- Supports rich parameter metadata including titles, descriptions, examples, and validation constraints.
+- Enables external clients to discover and validate tool usage without executing code.
+
+```mermaid
+flowchart TD
+A["@Mcp(generateJson: true)"] --> B["McpBuilder detects generateJson"]
+B --> C["Extract tool metadata"]
+C --> D["Build JSON schema"]
+D --> E[".mcp.json file"]
+E --> F["External client consumption"]
+```
+
+**Diagram sources**
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:552-578](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L552-L578)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:60-84](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L60-L84)
+
+**Section sources**
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:552-578](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L552-L578)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:60-84](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L60-L84)
+
 ## Dependency Analysis
 - The example depends on Shelf and StreamChannel to implement HTTP transport and bidirectional streaming.
 - The generator depends on the annotations package and uses dart_mcp for server scaffolding.
 - Dynamic configuration requires proper import handling based on address type.
+- Automatic JSON metadata generation adds optional .mcp.json file output.
 
 ```mermaid
 graph LR
 Annotations["easy_mcp_annotations"] --> Builder["mcp_builder.dart"]
 Builder --> Templates["templates.dart"]
 Templates --> Example[".mcp.dart (generated)"]
+Builder --> JsonMetadata[".mcp.json (optional)"]
 Example --> Shelf["shelf"]
 Example --> StreamChannel["stream_channel"]
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L141)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L738)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L241)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-834](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L834)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:282-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L282-L630)
 - [example/pubspec.yaml:11-22](file://example/pubspec.yaml#L11-L22)
 
@@ -403,6 +438,7 @@ Example --> StreamChannel["stream_channel"]
 - Consider connection pooling and concurrency limits at the HTTP layer if scaling horizontally.
 - Monitor queue depth and completion latency to detect backpressure.
 - Dynamic configuration adds minimal overhead during server startup.
+- JSON metadata generation occurs only when generateJson is enabled, adding minimal runtime cost.
 
 ## Troubleshooting Guide
 Common issues and remedies:
@@ -411,6 +447,8 @@ Common issues and remedies:
 - Address binding: Verify the server binds to the correct address; adjust address parameter if exposing externally.
 - Resource cleanup: Verify server lifecycle closes streams and the HTTP server gracefully.
 - Transport detection: Ensure @Mcp annotation is properly placed on top-level functions, classes, or methods.
+- JSON metadata generation: Enable generateJson parameter to produce .mcp.json files for external clients.
+- Missing dependencies: Ensure shelf and stream_channel packages are included in pubspec.yaml.
 
 **Section sources**
 - [packages/easy_mcp_generator/lib/builder/templates.dart:472-474](file://packages/easy_mcp_generator/lib/builder/templates.dart#L472-L474)
@@ -425,6 +463,7 @@ Common issues and remedies:
 - Dynamic configuration: Validate configuration inputs to prevent unexpected address/port combinations.
 - Docker deployments: Use environment variables for port and address configuration to avoid hardcoding sensitive values.
 - Remote access: Implement proper firewall rules and consider using VPN or SSH tunneling for secure remote access.
+- JSON metadata: The .mcp.json files contain sensitive tool information; restrict access to authorized clients only.
 
 **Updated** Enhanced security considerations for Docker and remote access deployments
 
@@ -483,6 +522,12 @@ Common issues and remedies:
 - Test different placement of @Mcp annotation (top-level function, class, method).
 - Verify that configuration extraction works regardless of annotation location.
 
+### Automatic JSON Metadata Generation
+- Enable JSON metadata generation by setting generateJson: true in @Mcp annotation.
+- The generator creates .mcp.json files with complete tool schemas and descriptions.
+- External clients can consume .mcp.json for tool discovery and validation.
+- Supports rich parameter metadata including titles, descriptions, examples, and validation constraints.
+
 **Updated** Added comprehensive Docker container and remote access deployment scenarios
 
 **Section sources**
@@ -491,4 +536,4 @@ Common issues and remedies:
 - [packages/easy_mcp_generator/lib/builder/templates.dart:471-501](file://packages/easy_mcp_generator/lib/builder/templates.dart#L471-L501)
 
 ## Conclusion
-The Easy MCP HTTP transport leverages Shelf for request handling, StreamChannel for bidirectional streaming, and a completer-queue mechanism to synchronize responses. The generator automates server creation from annotated tool definitions with sophisticated transport detection and dynamic configuration extraction. The system now supports flexible port and address configuration, enabling deployment in various environments from local development to production deployments including Docker containers and remote access scenarios. For production, consider CORS, authentication, and HTTPS via a reverse proxy, implement proper security measures for Docker deployments, and monitor performance to maintain responsiveness under load. The comprehensive configuration options and deployment flexibility make this solution suitable for diverse operational requirements.
+The Easy MCP HTTP transport leverages Shelf for request handling, StreamChannel for bidirectional streaming, and a completer-queue mechanism to synchronize responses. The generator automates server creation from annotated tool definitions with sophisticated transport detection and dynamic configuration extraction. The system now supports flexible port and address configuration, enabling deployment in various environments from local development to production deployments including Docker containers and remote access scenarios. The addition of automatic JSON metadata generation enhances tool discovery and external client integration. For production, consider CORS, authentication, and HTTPS via a reverse proxy, implement proper security measures for Docker deployments, and monitor performance to maintain responsiveness under load. The comprehensive configuration options and deployment flexibility make this solution suitable for diverse operational requirements.

@@ -19,11 +19,10 @@
 
 ## Update Summary
 **Changes Made**
-- Updated @Mcp annotation documentation to include new `port` and `address` parameters
-- Added comprehensive HTTP transport configuration documentation with default values
-- Enhanced transport-specific configuration effects section with port and address details
-- Updated practical examples to demonstrate HTTP transport with custom port and address
-- Added parameter validation rules and inheritance behavior documentation for new parameters
+- Updated version information from 0.2.1 to 0.2.2 for easy_mcp_annotations and easy_mcp_generator packages
+- Updated dependency examples to show ^0.2.2 versioning in README and pubspec files
+- Enhanced documentation links and package information to reflect current versions
+- Maintained all existing functionality documentation while updating version references
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -39,6 +38,8 @@
 
 ## Introduction
 This document explains the @Mcp annotation and its role in configuring MCP server generation. It focuses on transport configuration (McpTransport.stdio vs McpTransport.http), HTTP server configuration with port and address parameters, JSON-RPC protocol setup for stdio, and the generateJson parameter that controls schema metadata generation. It also documents parameter validation, defaults, inheritance behavior, and practical examples of how transport selection affects generated server code.
+
+**Updated** Version 0.2.2 introduces enhanced stability and improved dependency management with updated package versions.
 
 ## Project Structure
 The repository is a Dart workspace with two primary packages:
@@ -73,17 +74,17 @@ F --> A
 ```
 
 **Diagram sources**
-- [mcp_annotations.dart:1-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L141)
+- [mcp_annotations.dart:1-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L241)
 - [mcp_generator.dart:1-14](file://packages/easy_mcp_generator/lib/mcp_generator.dart#L1-L14)
-- [mcp_builder.dart:1-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L738)
+- [mcp_builder.dart:1-834](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L834)
 - [templates.dart:1-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L630)
 - [example.dart:1-67](file://example/bin/example.dart#L1-L67)
-- [user_store.dart:1-144](file://example/lib/src/user_store.dart#L1-L144)
+- [user_store.dart:1-158](file://example/lib/src/user_store.dart#L1-L158)
 
 **Section sources**
-- [README.md:1-120](file://README.md#L1-L120)
+- [README.md:1-168](file://README.md#L1-L168)
 - [pubspec.yaml (annotations):1-28](file://packages/easy_mcp_annotations/pubspec.yaml#L1-L28)
-- [pubspec.yaml (generator):1-35](file://packages/easy_mcp_generator/pubspec.yaml#L1-L35)
+- [pubspec.yaml (generator):1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
 - [pubspec.yaml (example):1-22](file://example/pubspec.yaml#L1-L22)
 
 ## Core Components
@@ -361,6 +362,8 @@ Common issues and resolutions:
 ## Conclusion
 The @Mcp annotation provides a concise way to configure MCP server generation, selecting between stdio and HTTP transports and controlling JSON metadata generation. The addition of port and address parameters enhances HTTP transport flexibility, allowing precise control over server binding. Understanding how transport selection and configuration parameters influence generated code helps you choose the right mode for your deployment scenario and troubleshoot runtime issues effectively.
 
+**Updated** Version 0.2.2 ensures stable package dependencies and improved compatibility with the latest Dart ecosystem.
+
 ## Appendices
 
 ### Best Practices for Transport Selection
@@ -386,7 +389,27 @@ The @Mcp annotation provides a concise way to configure MCP server generation, s
 - Remote access: `@Mcp(transport: McpTransport.http, address: '0.0.0.0')` → binds to 0.0.0.0:3000
 - Custom configuration: `@Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0')` → binds to 0.0.0.0:8080
 
+### Dependency Management Best Practices
+- Keep easy_mcp_annotations as a separate package dependency for annotation definitions.
+- Use easy_mcp_generator as a dev_dependency for code generation.
+- Ensure proper version alignment between packages for stable builds.
+- Example dependency structure:
+  ```yaml
+  dependencies:
+    easy_mcp_annotations: ^0.2.2
+  
+  dev_dependencies:
+    build_runner: ^2.4.0
+    easy_mcp_generator: ^0.2.2
+  ```
+
+**Updated** Version 0.2.2 dependency examples show the latest package versions for optimal compatibility.
+
 **Section sources**
 - [mcp_annotations.dart:54-90](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L54-L90)
 - [mcp_builder.dart:27-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L77)
 - [templates_test.dart:150-183](file://packages/easy_mcp_generator/test/templates_test.dart#L150-L183)
+- [pubspec.yaml (annotations):11-13](file://packages/easy_mcp_annotations/pubspec.yaml#L11-L13)
+- [pubspec.yaml (generator):10-19](file://packages/easy_mcp_generator/pubspec.yaml#L10-L19)
+- [pubspec.yaml (example):11-16](file://example/pubspec.yaml#L11-L16)
+- [README.md:24-31](file://README.md#L24-L31)

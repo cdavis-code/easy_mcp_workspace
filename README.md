@@ -23,11 +23,11 @@ Easy MCP allows you to expose Dart library functions as MCP tools using simple a
 
 ```yaml
 dependencies:
-  easy_mcp_annotations: ^0.2.2
+  easy_mcp_annotations: ^0.3.0
 
 dev_dependencies:
   build_runner: ^2.4.0
-  easy_mcp_generator: ^0.2.2
+  easy_mcp_generator: ^0.3.0
 ```
 
 ### 2. Annotate Your Functions
@@ -72,6 +72,7 @@ Controls the transport type and configuration for the generated server.
   port: 8080,                    // Default: 3000
   address: '0.0.0.0',            // Default: '127.0.0.1'
   generateJson: true,            // Optional: generate .mcp.json metadata
+  toolPrefix: 'user_service_',   // Optional: prefix all tool names
 )
 ```
 
@@ -82,9 +83,16 @@ Marks a method as an MCP tool and provides metadata.
 ```dart
 @Tool(description: 'Create a new user')
 Future<User> createUser(String name, String email) async { ... }
+
+// With custom tool name
+@Tool(
+  name: 'user_create',  // Custom name instead of method name
+  description: 'Creates a new user',
+)
+Future<User> createUser(String name, String email) async { ... }
 ```
 
-If `description` is omitted, the function's doc comment is used.
+If `description` is omitted, the function's doc comment is used. Use `name` to customize the tool name for avoiding collisions or better organization.
 
 ### `@Parameter` (Optional)
 
@@ -126,6 +134,7 @@ Future<User> createUser({
 - **Two transport modes** - stdio (JSON-RPC) and HTTP (Shelf-based)
 - **Configurable HTTP server** - Customize port and bind address
 - **Rich parameter metadata** - Optional `@Parameter` annotation for titles, descriptions, validation
+- **Custom tool names** - Use `name` parameter on `@Tool` or `toolPrefix` on `@Mcp` to avoid collisions
 - **Automatic schema generation** - Dart types mapped to JSON Schema
 - **Optional parameter support** - Named and optional positional parameters
 - **Doc comment extraction** - Falls back to doc comments when description not provided

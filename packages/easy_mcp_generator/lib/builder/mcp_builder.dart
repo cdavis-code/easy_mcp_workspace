@@ -42,8 +42,11 @@ class McpBuilder extends Builder {
     // Only process files with @Mcp annotation
     if (!_hasMcpAnnotation(library)) return;
 
+    // Extract tool prefix from @Mcp annotation (applies to all tools in scope)
+    final toolPrefix = _findToolPrefix(library);
+
     // Aggregate tools from this library AND all its imports
-    final tools = await _extractAllTools(library);
+    final tools = await _extractAllTools(library, toolPrefix);
 
     if (tools.isEmpty) return; // No tools found anywhere
 
@@ -78,6 +81,7 @@ class McpBuilder extends Builder {
 
   Future<List<Map<String, dynamic>>> _extractToolsFromLibrary(
     LibraryElement library,
+    String? toolPrefix,
   ) async {
     final tools = <Map<String, dynamic>>[];
     const toolChecker = TypeChecker.fromUrl(
@@ -92,9 +96,10 @@ class McpBuilder extends Builder {
       final description = _extractDescription(toolAnnotation, element);
       final parameters = _extractParametersFromElement(element);
       final isAsync = element.returnType.isDartAsyncFuture;
+      final toolName = _extractToolName(toolAnnotation, element.name ?? 'unnamed', toolPrefix);
 
       tools.add(<String, dynamic>{
-        'name': element.name,
+        'name': toolName,
         'description': description,
         'parameters': parameters,
         'isAsync': isAsync,
@@ -110,9 +115,10 @@ class McpBuilder extends Builder {
         final description = _extractDescription(toolAnnotation, method);
         final parameters = _extractParametersFromElement(method);
         final isAsync = method.returnType.isDartAsyncFuture;
+        final toolName = _extractToolName(toolAnnotation, method.name ?? 'unnamed', toolPrefix);
 
         tools.add(<String, dynamic>{
-          'name': method.name,
+          'name': toolName,
           'description': description,
           'parameters': parameters,
           'isAsync': isAsync,
@@ -127,8 +133,10 @@ class McpBuilder extends Builder {
 
   /// Extracts tools from the current library and all package-local imports.
   /// Each tool is annotated with sourceImport and sourceAlias.
+  /// Applies the toolPrefix to all extracted tool names.
   Future<List<Map<String, dynamic>>> _extractAllTools(
     LibraryElement library,
+    String? toolPrefix,
   ) async {
     final allTools = <Map<String, dynamic>>[];
     final aliasCounts = <String, int>{};
@@ -138,7 +146,7 @@ class McpBuilder extends Builder {
     final packageName = _extractPackageName(currentPackageUri);
 
     // Extract tools from the current library (@Mcp file itself)
-    final currentLibTools = await _extractToolsFromLibrary(library);
+    final currentLibTools = await _extractToolsFromLibrary(library, toolPrefix);
     final currentAlias = _deriveAlias(currentPackageUri);
     for (final tool in currentLibTools) {
       tool['sourceImport'] = currentPackageUri;
@@ -159,8 +167,8 @@ class McpBuilder extends Builder {
       final importedPackageName = _extractPackageName(importedUri);
       if (importedPackageName != packageName) continue;
 
-      // Extract tools from this imported library
-      final importedTools = await _extractToolsFromLibrary(importedLib);
+      // Extract tools from this imported library (also apply prefix)
+      final importedTools = await _extractToolsFromLibrary(importedLib, toolPrefix);
       if (importedTools.isEmpty) continue;
 
       // Derive alias and ensure uniqueness
@@ -231,6 +239,35 @@ class McpBuilder extends Builder {
     }
 
     return 'Tool ${element.name}';
+  }
+
+  /// Extracts the tool name from the annotation, applying custom name and prefix.
+  ///
+  /// Priority: custom name from @Tool.name > method name
+  /// Then applies toolPrefix if provided.
+  String _extractToolName(
+    DartObject? toolAnnotation,
+    String methodName,
+    String? toolPrefix,
+  ) {
+    final reader = ConstantReader(toolAnnotation);
+    final nameField = reader.peek('name');
+    
+    // Use custom name if provided, otherwise use method name
+    String toolName = methodName;
+    if (nameField != null && nameField.isString) {
+      final customName = nameField.stringValue;
+      if (customName.isNotEmpty) {
+        toolName = customName;
+      }
+    }
+    
+    // Apply prefix if provided
+    if (toolPrefix != null && toolPrefix.isNotEmpty) {
+      toolName = '$toolPrefix$toolName';
+    }
+    
+    return toolName;
   }
 
   String _stripDocComment(String docComment) {
@@ -825,6 +862,56 @@ class McpBuilder extends Builder {
     final addressField = reader.peek('address');
     if (addressField != null) {
       return addressField.stringValue;
+    }
+    return null;
+  }
+
+  /// Finds the tool prefix from @Mcp annotations in the library.
+  ///
+  /// Searches through top-level functions, classes, and methods for @Mcp
+  /// annotations and extracts the toolPrefix parameter. This prefix is
+  /// applied to all tool names in the generated MCP server.
+  ///
+  /// Returns null if no prefix is explicitly specified.
+  String? _findToolPrefix(LibraryElement library) {
+    const mcpChecker = TypeChecker.fromUrl(
+      'package:easy_mcp_annotations/mcp_annotations.dart#Mcp',
+    );
+
+    // Check top-level functions
+    for (final element in library.topLevelFunctions) {
+      final annotation = mcpChecker.firstAnnotationOf(element);
+      if (annotation != null) {
+        final prefix = _extractToolPrefixFromAnnotation(annotation);
+        if (prefix != null) return prefix;
+      }
+    }
+
+    // Check classes
+    for (final element in library.classes) {
+      final annotation = mcpChecker.firstAnnotationOf(element);
+      if (annotation != null) {
+        final prefix = _extractToolPrefixFromAnnotation(annotation);
+        if (prefix != null) return prefix;
+      }
+      // Check methods within classes
+      for (final method in element.methods) {
+        final methodAnnotation = mcpChecker.firstAnnotationOf(method);
+        if (methodAnnotation != null) {
+          final prefix = _extractToolPrefixFromAnnotation(methodAnnotation);
+          if (prefix != null) return prefix;
+        }
+      }
+    }
+
+    return null; // No prefix specified
+  }
+
+  String? _extractToolPrefixFromAnnotation(DartObject annotation) {
+    final reader = ConstantReader(annotation);
+    final prefixField = reader.peek('toolPrefix');
+    if (prefixField != null) {
+      return prefixField.stringValue;
     }
     return null;
   }

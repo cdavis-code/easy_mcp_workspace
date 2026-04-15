@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-15
+
+### Added
+- Added support for custom tool names via `@Tool.name` parameter
+- Added support for tool name prefixes via `@Mcp.toolPrefix` parameter
+- Generator now uses custom names and applies prefixes when generating tool definitions
+- Updated documentation with examples for custom tool naming
+
 ## [0.2.2] - 2026-04-14
 
 ### Fixed

@@ -8,18 +8,19 @@
 - [templates.dart](file://packages/easy_mcp_generator/lib/builder/templates.dart)
 - [README.md](file://packages/easy_mcp_annotations/README.md)
 - [README.md](file://README.md)
-- [example.dart](file://example/lib/src/user_store.dart)
-- [example_user_store.dart](file://example/lib/src/user_store.dart)
+- [user_store.dart](file://example/lib/src/user_store.dart)
+- [CHANGELOG.md](file://packages/easy_mcp_annotations/CHANGELOG.md)
+- [CHANGELOG.md](file://packages/easy_mcp_generator/CHANGELOG.md)
 </cite>
 
 ## Update Summary
 **Changes Made**
-- Updated parameter metadata extraction process to reflect complete implementation
-- Added comprehensive validation features section with all supported constraint types
-- Enhanced schema generation documentation with rich metadata application
-- Expanded security guidelines for sensitive data handling
-- Updated examples to demonstrate full parameter annotation capabilities
-- Added troubleshooting section for common parameter annotation issues
+- Enhanced @Parameter annotation documentation with comprehensive validation features
+- Updated examples to demonstrate pattern validation, numeric constraints, and sensitive data handling
+- Added detailed coverage of all supported constraint types including minimum/maximum values and enum restrictions
+- Expanded security considerations for sensitive data protection
+- Updated troubleshooting section with validation-related issues
+- Added comprehensive examples showing real-world parameter annotation usage
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -38,13 +39,13 @@
 
 The `@Parameter` annotation is a powerful feature in the Easy MCP ecosystem that allows developers to provide rich metadata for individual parameters in MCP tools. This annotation enhances the developer experience by enabling detailed parameter descriptions, validation rules, and user-friendly presentations in MCP clients.
 
-**Updated**: The `@Parameter` annotation system is now fully implemented with comprehensive metadata support including titles, descriptions, validation constraints, example values, and sensitive data handling.
+**Updated**: The `@Parameter` annotation system is now fully implemented with comprehensive metadata support including titles, descriptions, validation constraints, example values, and sensitive data handling. The system supports pattern validation for string parameters, numeric constraints for integer and double types, enum value restrictions, and sensitive data marking for security-conscious applications.
 
 ## Overview
 
 The `@Parameter` annotation serves as an optional enhancement to the basic parameter extraction process. While the generator can automatically extract parameter information from Dart types and method signatures, the `@Parameter` annotation allows developers to provide additional metadata that improves the usability and reliability of MCP tools.
 
-**Updated**: The system now supports complete parameter metadata extraction with validation constraints, example values, and security considerations.
+**Updated**: The system now supports complete parameter metadata extraction with validation constraints, example values, and security considerations. The annotation provides comprehensive validation features including string pattern matching, numeric range validation, enum value restrictions, and sensitive data handling.
 
 Key capabilities include:
 - Human-readable titles and descriptions
@@ -180,7 +181,7 @@ Future<Item> createItem({
 **Section sources**
 - [README.md:77-104](file://packages/easy_mcp_annotations/README.md#L77-L104)
 - [README.md:106-118](file://packages/easy_mcp_annotations/README.md#L106-L118)
-- [example_user_store.dart:52-72](file://example/lib/src/user_store.dart#L52-L72)
+- [user_store.dart:52-72](file://example/lib/src/user_store.dart#L52-L72)
 
 ## Metadata Extraction Process
 

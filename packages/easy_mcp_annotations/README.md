@@ -14,7 +14,7 @@ Add this to your package's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  easy_mcp_annotations: ^0.2.2
+  easy_mcp_annotations: ^0.3.0
 ```
 
 ## Usage
@@ -67,6 +67,7 @@ class MyServer {
 | `port` | `int` | `3000` | HTTP server port (only for HTTP transport) |
 | `address` | `String` | `'127.0.0.1'` | HTTP bind address (only for HTTP transport). Use `'0.0.0.0'` to listen on all interfaces |
 | `generateJson` | `bool` | `false` | Whether to generate `.mcp.json` metadata file |
+| `toolPrefix` | `String?` | `null` | Prefix added to all tool names (e.g., `'user_'` makes `createUser` → `user_createUser`) |
 
 ### Parameter Annotations (Optional)
 
@@ -115,6 +116,40 @@ Future<User> createUser({
 | `pattern` | `String?` | `null` | Regular expression pattern for string validation |
 | `sensitive` | `bool` | `false` | Whether this parameter contains sensitive data |
 | `enumValues` | `List<Object?>?` | `null` | List of allowed values |
+
+#### @Tool Annotation Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | `String?` | `null` | Custom tool name (defaults to method name). Useful for avoiding naming collisions |
+| `description` | `String?` | `null` | Tool description (uses dartdoc if omitted) |
+| `icons` | `List<String>?` | `null` | List of icon URLs for UI clients |
+
+**Example with custom tool name:**
+
+```dart
+@Mcp(transport: McpTransport.stdio)
+class UserService {
+  @Tool(
+    name: 'user_create',  // Custom name instead of 'createUser'
+    description: 'Creates a new user',
+  )
+  Future<User> createUser(String name, String email) async { ... }
+}
+```
+
+**Example with tool prefix:**
+
+```dart
+@Mcp(transport: McpTransport.stdio, toolPrefix: 'user_service_')
+class UserService {
+  @Tool(description: 'Create user')
+  Future<User> createUser() async { ... }  // Tool name: user_service_createUser
+  
+  @Tool(description: 'Delete user')
+  Future<void> deleteUser(String id) async { ... }  // Tool name: user_service_deleteUser
+}
+```
 
 See the [example](https://github.com/cdavis-code/easy_mcp_workspace/tree/main/example) directory in the workspace root for a complete working example that demonstrates usage of both packages together.
 

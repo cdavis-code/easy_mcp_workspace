@@ -3,7 +3,6 @@
 <cite>
 **Referenced Files in This Document**
 - [README.md](file://README.md)
-- [outline.md](file://outline.md)
 - [packages/easy_mcp_annotations/lib/mcp_annotations.dart](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart)
 - [packages/easy_mcp_generator/lib/mcp_generator.dart](file://packages/easy_mcp_generator/lib/mcp_generator.dart)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart)
@@ -16,7 +15,15 @@
 - [example/lib/src/todo_store.dart](file://example/lib/src/todo_store.dart)
 - [packages/easy_mcp_annotations/pubspec.yaml](file://packages/easy_mcp_annotations/pubspec.yaml)
 - [packages/easy_mcp_generator/pubspec.yaml](file://packages/easy_mcp_generator/pubspec.yaml)
+- [pubspec.yaml](file://pubspec.yaml)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated version information from 0.2.1 to 0.2.2 across all package specifications
+- Updated README dependency specifications to reflect new version 0.2.2
+- Enhanced package version tracking and dependency management information
+- Updated monorepo structure documentation to reflect current package versions
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -32,6 +39,8 @@
 ## Introduction
 Easy MCP is a Dart framework that transforms annotated Dart functions into Model Context Protocol (MCP) servers with minimal boilerplate. By annotating existing library methods with simple decorators, developers can expose their functionality as MCP tools and run either stdio-based or HTTP-based servers that conform to the MCP specification. The framework emphasizes rapid development, automatic schema generation, dual transport support, and an annotation-driven workflow that integrates seamlessly with build_runner.
 
+**Updated** Version 0.2.2 introduces enhanced stability and improved dependency management across the ecosystem.
+
 Key value propositions:
 - Rapid development: Write your business logic once, annotate it, and generate production-ready MCP servers.
 - Automatic schema generation: Dart types are introspected and mapped to JSON Schema for precise tool contracts.
@@ -39,19 +48,19 @@ Key value propositions:
 - Annotation-driven workflow: Keep your codebase clean and declarative using @Mcp and @Tool annotations.
 
 ## Project Structure
-The repository is a Dart monorepo containing two main packages and an example application that demonstrates real-world usage.
+The repository is a Dart monorepo containing two main packages and an example application that demonstrates real-world usage. All packages have been updated to version 0.2.2 for consistent ecosystem compatibility.
 
-- packages/easy_mcp_annotations: Defines the @Mcp and @Tool annotations used to mark entry points and MCP tools.
-- packages/easy_mcp_generator: Implements a build_runner generator that parses annotated code and produces MCP server implementations.
-- example: A comprehensive example showcasing a many-to-many domain model (Users and Todos) with cross-store operations, demonstrating how to aggregate tools from multiple libraries into a single MCP server.
+- **packages/easy_mcp_annotations (v0.2.2)**: Defines the @Mcp and @Tool annotations used to mark entry points and MCP tools.
+- **packages/easy_mcp_generator (v0.2.2)**: Implements a build_runner generator that parses annotated code and produces MCP server implementations.
+- **example**: A comprehensive example showcasing a many-to-many domain model (Users and Todos) with cross-store operations, demonstrating how to aggregate tools from multiple libraries into a single MCP server.
 
 ```mermaid
 graph TB
 subgraph "Monorepo"
-subgraph "Annotations"
+subgraph "Annotations (v0.2.2)"
 A1["packages/easy_mcp_annotations/lib/mcp_annotations.dart"]
 end
-subgraph "Generator"
+subgraph "Generator (v0.2.2)"
 G1["packages/easy_mcp_generator/lib/mcp_generator.dart"]
 G2["packages/easy_mcp_generator/lib/builder/mcp_builder.dart"]
 G3["packages/easy_mcp_generator/lib/builder/schema_builder.dart"]
@@ -75,7 +84,7 @@ G2 --> E2
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L49)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L241)
 - [packages/easy_mcp_generator/lib/mcp_generator.dart:1-14](file://packages/easy_mcp_generator/lib/mcp_generator.dart#L1-L14)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-567](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L567)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
@@ -86,15 +95,15 @@ G2 --> E2
 - [example/lib/src/todo_store.dart:1-236](file://example/lib/src/todo_store.dart#L1-L236)
 
 **Section sources**
-- [README.md:1-120](file://README.md#L1-L120)
+- [README.md:1-168](file://README.md#L1-L168)
 - [packages/easy_mcp_annotations/pubspec.yaml:1-28](file://packages/easy_mcp_annotations/pubspec.yaml#L1-L28)
-- [packages/easy_mcp_generator/pubspec.yaml:1-35](file://packages/easy_mcp_generator/pubspec.yaml#L1-L35)
-- [example/README.md:1-301](file://example/README.md#L1-L301)
+- [packages/easy_mcp_generator/pubspec.yaml:1-34](file://packages/easy_mcp_generator/pubspec.yaml#L1-L34)
+- [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
 
 ## Core Components
-- Annotations package: Provides @Mcp and @Tool annotations to declare transport modes and tool metadata. The @Mcp annotation controls transport (stdio or http), while @Tool marks methods as MCP tools and supplies descriptions/icons.
-- Generator package: Implements a build_runner builder that scans libraries for @Mcp and @Tool annotations, extracts tool metadata, generates JSON Schema, and produces complete MCP server code with stdio or HTTP transport modes.
-- Example application: Demonstrates practical usage with a realistic domain model, showing how tools are aggregated from multiple libraries and how the generated server exposes them.
+- **Annotations package (v0.2.2)**: Provides @Mcp and @Tool annotations to declare transport modes and tool metadata. The @Mcp annotation controls transport (stdio or http), while @Tool marks methods as MCP tools and supplies descriptions/icons.
+- **Generator package (v0.2.2)**: Implements a build_runner builder that scans libraries for @Mcp and @Tool annotations, extracts tool metadata, generates JSON Schema, and produces complete MCP server code with stdio or HTTP transport modes.
+- **Example application**: Demonstrates practical usage with a realistic domain model, showing how tools are aggregated from multiple libraries and how the generated server exposes them.
 
 Benefits:
 - Minimal boilerplate: Developers write annotated functions; the generator produces runnable servers.
@@ -103,7 +112,7 @@ Benefits:
 - Annotation-driven development: Clear separation between business logic and server scaffolding.
 
 **Section sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L49)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L241)
 - [packages/easy_mcp_generator/lib/mcp_generator.dart:1-14](file://packages/easy_mcp_generator/lib/mcp_generator.dart#L1-L14)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:12-567](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L12-L567)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:6-578](file://packages/easy_mcp_generator/lib/builder/templates.dart#L6-L578)
@@ -147,7 +156,7 @@ Dev->>Out : "Run generated server"
 
 ### Annotations: @Mcp and @Tool
 - @Mcp: Declares the transport mode for the generated server (stdio or http) and optionally enables JSON metadata generation.
-- @Tool: Marks a function as an MCP tool, providing a description and optional icons. If description is omitted, the generator falls back to the function’s doc comment.
+- @Tool: Marks a function as an MCP tool, providing a description and optional icons. If description is omitted, the generator falls back to the function's doc comment.
 
 ```mermaid
 classDiagram
@@ -166,10 +175,10 @@ enum McpTransport {
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:25-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L25-L49)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:25-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L25-L241)
 
 **Section sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-49](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L49)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:6-241](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L6-L241)
 
 ### Generator Pipeline: McpBuilder
 - Scans libraries for @Mcp annotations to determine which files to process.
@@ -255,9 +264,11 @@ These examples demonstrate how to:
 ## Dependency Analysis
 The generator depends on the annotations package and uses analyzer, source_gen, and code_builder to parse Dart code and generate code. The example application demonstrates how annotated libraries feed into the generator to produce a runnable MCP server.
 
+**Updated** All packages now consistently use version 0.2.2 for ecosystem compatibility.
+
 ```mermaid
 graph LR
-ANNO["easy_mcp_annotations"] --> GEN["easy_mcp_generator"]
+ANNO["easy_mcp_annotations v0.2.2"] --> GEN["easy_mcp_generator v0.2.2"]
 GEN --> OUT[".mcp.dart (generated)"]
 EX["example libraries"] --> GEN
 EX --> OUT
@@ -279,8 +290,6 @@ EX --> OUT
 - Transport selection: Choose stdio for lightweight, CLI-focused integrations or HTTP for web-based inspection and browser UI testing.
 - Generated code: The templates avoid reflection and use direct parameter extraction and serialization for predictable runtime performance.
 
-[No sources needed since this section provides general guidance]
-
 ## Troubleshooting Guide
 - No tools discovered: Ensure the entry point library has an @Mcp annotation and that @Tool methods are static or properly scoped within classes.
 - Transport mismatch: Verify the @Mcp transport setting matches the intended runtime environment (stdio vs. HTTP).
@@ -295,4 +304,4 @@ EX --> OUT
 ## Conclusion
 Easy MCP accelerates the creation of MCP servers by turning annotated Dart functions into runnable services with minimal effort. Its annotation-driven design, automatic schema generation, and dual transport support streamline development for both beginners and experienced developers. The monorepo structure cleanly separates concerns between annotations and code generation, while the example demonstrates practical patterns for building AI agent integrations and automating server-side workflows.
 
-[No sources needed since this section summarizes without analyzing specific files]
+**Updated** Version 0.2.2 provides enhanced stability and consistent dependency management across the ecosystem, making it easier for developers to adopt and integrate Easy MCP into their projects.

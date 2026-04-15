@@ -14,8 +14,8 @@ Add this to your package's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  easy_mcp_generator: ^0.2.2
-  easy_mcp_annotations: ^0.2.2
+  easy_mcp_generator: ^0.3.0
+  easy_mcp_annotations: ^0.3.0
 
 dev_dependencies:
   build_runner: ^2.4.0
@@ -103,6 +103,41 @@ The `@Parameter` annotation is **optional** - by default, the generator extracts
 - Example values to guide users
 - Validation constraints (min/max, patterns, enum values)
 - To mark sensitive data (passwords, API keys)
+
+### Custom Tool Names
+
+By default, the generator uses method names as tool names. You can customize this using:
+
+**1. The `name` parameter on `@Tool`:**
+
+```dart
+@Mcp(transport: McpTransport.stdio)
+class UserService {
+  @Tool(
+    name: 'user_create',  // Custom tool name
+    description: 'Creates a new user',
+  )
+  Future<User> createUser(String name, String email) async { ... }
+}
+```
+
+**2. The `toolPrefix` parameter on `@Mcp` (applies to all tools in the class):**
+
+```dart
+@Mcp(transport: McpTransport.stdio, toolPrefix: 'user_service_')
+class UserService {
+  @Tool(description: 'Create user')
+  Future<User> createUser() async { ... }  // Tool name: user_service_createUser
+  
+  @Tool(description: 'Delete user')
+  Future<void> deleteUser(String id) async { ... }  // Tool name: user_service_deleteUser
+}
+```
+
+This is useful for:
+- Avoiding naming collisions when aggregating tools from multiple files
+- Organizing tools by domain (e.g., `user_`, `order_`, `admin_`)
+- Creating more descriptive names for MCP clients
 
 2. Run the generator:
 
