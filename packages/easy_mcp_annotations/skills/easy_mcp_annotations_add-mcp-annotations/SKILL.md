@@ -29,6 +29,8 @@ Marks the entry point for MCP server generation.
   port: 3000,                      // for HTTP transport
   address: '127.0.0.1',           // for HTTP transport
   generateJson: false,            // generate .mcp.json file
+  toolPrefix: 'api_',             // prefix all tool names
+  autoClassPrefix: true,          // prefix with class name
 )
 ```
 
@@ -38,6 +40,7 @@ Marks the entry point for MCP server generation.
 - `address`: HTTP bind address (default: '127.0.0.1', use '0.0.0.0' for all interfaces)
 - `generateJson`: Whether to generate JSON metadata file
 - `toolPrefix`: Prefix added to all tool names (e.g., 'user_' makes 'createUser' → 'user_createUser')
+- `autoClassPrefix`: Automatically prefix tool names with class name (e.g., `UserService_createUser`)
 
 ### @Tool
 Marks a method as an MCP tool.
@@ -157,6 +160,29 @@ class UserService {
   
   @Tool(description: 'Delete user')
   Future<void> deleteUser(String id) async { ... }  // Tool name: user_service_deleteUser
+}
+```
+
+**Option C: Use `autoClassPrefix` for automatic class-based naming:**
+
+```dart
+@Mcp(transport: McpTransport.stdio, autoClassPrefix: true)
+class UserService {
+  @Tool(description: 'Create user')
+  Future<User> createUser() async { ... }  // Tool name: UserService_createUser
+  
+  @Tool(description: 'Delete user')
+  Future<void> deleteUser(String id) async { ... }  // Tool name: UserService_deleteUser
+}
+```
+
+**Combining `autoClassPrefix` with `toolPrefix`:**
+
+```dart
+@Mcp(transport: McpTransport.stdio, autoClassPrefix: true, toolPrefix: 'api_')
+class UserService {
+  @Tool(description: 'Create user')
+  Future<User> createUser() async { ... }  // Tool name: api_UserService_createUser
 }
 ```
 
@@ -289,6 +315,7 @@ class StringUtils {
 3. **Validate Parameters**: Use `@Parameter` with `pattern`, `minimum`, `maximum` for validation
 4. **Return Types**: Ensure return types are JSON-serializable
 5. **Error Handling**: Throw descriptive exceptions; they become error messages in MCP clients
+6. **Avoid Naming Collisions**: Use `autoClassPrefix: true` when multiple classes have methods with the same name, or use `toolPrefix` to organize tools by domain
 
 ## Troubleshooting
 
@@ -312,6 +339,7 @@ When converting existing code:
 - [ ] Add `@Mcp` to the main class/library
 - [ ] Add `@Tool` to methods you want to expose
 - [ ] Add `@Parameter` for complex parameter validation (optional)
+- [ ] Configure `toolPrefix` or `autoClassPrefix` if needed to avoid naming collisions
 - [ ] Run `dart run build_runner build`
 - [ ] Test the generated server
 - [ ] Update documentation
