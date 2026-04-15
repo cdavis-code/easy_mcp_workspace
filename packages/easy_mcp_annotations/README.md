@@ -1,7 +1,7 @@
 # easy_mcp_annotations
 
 <p align="center">
-  <img src="../../images/logo-banner.svg" width="400" alt="easy_mcp">
+  <img src="https://raw.githubusercontent.com/cdavis-code/easy_mcp_workspace/main/images/logo-banner.svg" width="400" alt="easy_mcp">
 </p>
 
 Dart annotations for exposing library methods as MCP tools.
@@ -15,7 +15,13 @@ Add this to your package's `pubspec.yaml`:
 ```yaml
 dependencies:
   easy_mcp_annotations: ^0.4.1
+
+dev_dependencies:
+  build_runner: ^2.4.0
+  easy_mcp_generator: ^0.4.1
 ```
+
+> **Note:** This package provides only the annotations. You also need [`easy_mcp_generator`](https://pub.dev/packages/easy_mcp_generator) to generate the MCP server code from your annotated classes.
 
 ## Usage
 
@@ -194,4 +200,6 @@ BSD-3-Clause - See [LICENSE](LICENSE) for details.
 
 If you find this package useful, consider supporting its development:
 
-- [Buy me a coffee](https://buymeacoffee.com/cdavis)
+<a href="https://buymeacoffee.com/cdavis" target="_blank">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
+</a>
