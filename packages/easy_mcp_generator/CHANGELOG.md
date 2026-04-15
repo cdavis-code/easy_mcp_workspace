@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-04-15
+
+### Fixed
+- Fixed method name resolution when `autoClassPrefix` is enabled
+- Method calls now correctly use original method names instead of prefixed tool names
+- Example: `UserStore.createUser()` instead of `UserStore.UserStore_createUser()`
+
 ## [0.4.0] - 2026-04-15
 
 ### Added
