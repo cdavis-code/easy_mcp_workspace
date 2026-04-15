@@ -14,8 +14,8 @@ Add this to your package's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  easy_mcp_generator: ^0.3.0
-  easy_mcp_annotations: ^0.3.0
+  easy_mcp_generator: ^0.4.0
+  easy_mcp_annotations: ^0.4.0
 
 dev_dependencies:
   build_runner: ^2.4.0
@@ -131,6 +131,29 @@ class UserService {
   
   @Tool(description: 'Delete user')
   Future<void> deleteUser(String id) async { ... }  // Tool name: user_service_deleteUser
+}
+```
+
+**3. The `autoClassPrefix` parameter on `@Mcp` (automatically uses class name):**
+
+```dart
+@Mcp(transport: McpTransport.stdio, autoClassPrefix: true)
+class UserService {
+  @Tool(description: 'Create user')
+  Future<User> createUser() async { ... }  // Tool name: UserService_createUser
+  
+  @Tool(description: 'Delete user')
+  Future<void> deleteUser(String id) async { ... }  // Tool name: UserService_deleteUser
+}
+```
+
+You can also combine `autoClassPrefix` with `toolPrefix`:
+
+```dart
+@Mcp(transport: McpTransport.stdio, autoClassPrefix: true, toolPrefix: 'api_')
+class UserService {
+  @Tool(description: 'Create user')
+  Future<User> createUser() async { ... }  // Tool name: api_UserService_createUser
 }
 ```
 

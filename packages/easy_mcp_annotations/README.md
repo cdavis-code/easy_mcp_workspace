@@ -14,7 +14,7 @@ Add this to your package's `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  easy_mcp_annotations: ^0.3.0
+  easy_mcp_annotations: ^0.4.0
 ```
 
 ## Usage
@@ -68,6 +68,7 @@ class MyServer {
 | `address` | `String` | `'127.0.0.1'` | HTTP bind address (only for HTTP transport). Use `'0.0.0.0'` to listen on all interfaces |
 | `generateJson` | `bool` | `false` | Whether to generate `.mcp.json` metadata file |
 | `toolPrefix` | `String?` | `null` | Prefix added to all tool names (e.g., `'user_'` makes `createUser` → `user_createUser`) |
+| `autoClassPrefix` | `bool` | `false` | Automatically prefix tool names with class name (e.g., `UserService_createUser`) |
 
 ### Parameter Annotations (Optional)
 
@@ -148,6 +149,29 @@ class UserService {
   
   @Tool(description: 'Delete user')
   Future<void> deleteUser(String id) async { ... }  // Tool name: user_service_deleteUser
+}
+```
+
+**Example with auto class prefix:**
+
+```dart
+@Mcp(transport: McpTransport.stdio, autoClassPrefix: true)
+class UserService {
+  @Tool(description: 'Create user')
+  Future<User> createUser() async { ... }  // Tool name: UserService_createUser
+  
+  @Tool(description: 'Delete user')
+  Future<void> deleteUser(String id) async { ... }  // Tool name: UserService_deleteUser
+}
+```
+
+**Combining autoClassPrefix with toolPrefix:**
+
+```dart
+@Mcp(transport: McpTransport.stdio, autoClassPrefix: true, toolPrefix: 'api_')
+class UserService {
+  @Tool(description: 'Create user')
+  Future<User> createUser() async { ... }  // Tool name: api_UserService_createUser
 }
 ```
 

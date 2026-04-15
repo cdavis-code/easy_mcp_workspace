@@ -64,6 +64,15 @@ enum McpTransport {
 ///   Future<User> createUser() async { ... }  // Tool name: user_service_createUser
 /// }
 /// ```
+///
+/// Example with auto class prefix:
+/// ```dart
+/// @Mcp(transport: McpTransport.stdio, autoClassPrefix: true)
+/// class UserService {
+///   @Tool(description: 'Create user')
+///   Future<User> createUser() async { ... }  // Tool name: UserService_createUser
+/// }
+/// ```
 class Mcp {
   /// The transport protocol used by the generated MCP server.
   ///
@@ -96,6 +105,19 @@ class Mcp {
   /// The prefix is applied after any custom name from @Tool.name.
   final String? toolPrefix;
 
+  /// Whether to automatically prefix tool names with their class name.
+  ///
+  /// When true, tools defined in classes will be named `ClassName_methodName`
+  /// instead of just `methodName`. This helps avoid naming collisions when
+  /// multiple classes have methods with the same name.
+  ///
+  /// The class name prefix is applied before any custom [toolPrefix].
+  /// For example, with `autoClassPrefix: true` and `toolPrefix: 'api_'`,
+  /// a method `createUser` in class `UserService` becomes `api_UserService_createUser`.
+  ///
+  /// Defaults to false for backward compatibility.
+  final bool autoClassPrefix;
+
   /// Creates an MCP configuration annotation.
   ///
   /// [transport] determines the communication protocol (stdio or HTTP).
@@ -103,12 +125,14 @@ class Mcp {
   /// [port] specifies the HTTP server port (default: 3000).
   /// [address] specifies the HTTP bind address (default: '127.0.0.1').
   /// [toolPrefix] adds a prefix to all tool names in this scope.
+  /// [autoClassPrefix] automatically prefixes tool names with class name.
   const Mcp({
     this.transport = McpTransport.stdio,
     this.generateJson = false,
     this.port = 3000,
     this.address = '127.0.0.1',
     this.toolPrefix,
+    this.autoClassPrefix = false,
   });
 }
 

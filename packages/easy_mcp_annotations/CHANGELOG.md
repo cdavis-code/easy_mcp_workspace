@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-15
+
+### Added
+- Added `autoClassPrefix` parameter to `@Mcp` annotation
+- When enabled, tool names are automatically prefixed with their class name (e.g., `UserService_createUser`)
+- Can be combined with `toolPrefix` for even more organization (e.g., `api_UserService_createUser`)
+- Disabled by default for backward compatibility
+
 ## [0.3.0] - 2026-04-15
 
 ### Added

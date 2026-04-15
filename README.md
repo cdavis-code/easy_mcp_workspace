@@ -23,11 +23,11 @@ Easy MCP allows you to expose Dart library functions as MCP tools using simple a
 
 ```yaml
 dependencies:
-  easy_mcp_annotations: ^0.3.0
+  easy_mcp_annotations: ^0.4.0
 
 dev_dependencies:
   build_runner: ^2.4.0
-  easy_mcp_generator: ^0.3.0
+  easy_mcp_generator: ^0.4.0
 ```
 
 ### 2. Annotate Your Functions
@@ -73,6 +73,7 @@ Controls the transport type and configuration for the generated server.
   address: '0.0.0.0',            // Default: '127.0.0.1'
   generateJson: true,            // Optional: generate .mcp.json metadata
   toolPrefix: 'user_service_',   // Optional: prefix all tool names
+  autoClassPrefix: true,         // Optional: prefix with class name
 )
 ```
 
@@ -134,7 +135,7 @@ Future<User> createUser({
 - **Two transport modes** - stdio (JSON-RPC) and HTTP (Shelf-based)
 - **Configurable HTTP server** - Customize port and bind address
 - **Rich parameter metadata** - Optional `@Parameter` annotation for titles, descriptions, validation
-- **Custom tool names** - Use `name` parameter on `@Tool` or `toolPrefix` on `@Mcp` to avoid collisions
+- **Custom tool names** - Use `name` parameter on `@Tool`, `toolPrefix` or `autoClassPrefix` on `@Mcp` to avoid collisions
 - **Automatic schema generation** - Dart types mapped to JSON Schema
 - **Optional parameter support** - Named and optional positional parameters
 - **Doc comment extraction** - Falls back to doc comments when description not provided

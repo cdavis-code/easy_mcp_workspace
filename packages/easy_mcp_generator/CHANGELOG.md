@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-15
+
+### Added
+- Added support for `autoClassPrefix` parameter on `@Mcp` annotation
+- Generator now automatically prefixes tool names with class name when enabled
+- Supports combining `autoClassPrefix` with `toolPrefix` for flexible naming
+- Updated documentation with examples for all naming options
+
 ## [0.3.0] - 2026-04-15
 
 ### Added

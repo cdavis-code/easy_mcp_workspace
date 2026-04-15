@@ -45,8 +45,11 @@ class McpBuilder extends Builder {
     // Extract tool prefix from @Mcp annotation (applies to all tools in scope)
     final toolPrefix = _findToolPrefix(library);
 
+    // Extract auto class prefix setting from @Mcp annotation
+    final autoClassPrefix = _findAutoClassPrefix(library);
+
     // Aggregate tools from this library AND all its imports
-    final tools = await _extractAllTools(library, toolPrefix);
+    final tools = await _extractAllTools(library, toolPrefix, autoClassPrefix);
 
     if (tools.isEmpty) return; // No tools found anywhere
 
@@ -82,6 +85,7 @@ class McpBuilder extends Builder {
   Future<List<Map<String, dynamic>>> _extractToolsFromLibrary(
     LibraryElement library,
     String? toolPrefix,
+    bool autoClassPrefix,
   ) async {
     final tools = <Map<String, dynamic>>[];
     const toolChecker = TypeChecker.fromUrl(
@@ -96,7 +100,11 @@ class McpBuilder extends Builder {
       final description = _extractDescription(toolAnnotation, element);
       final parameters = _extractParametersFromElement(element);
       final isAsync = element.returnType.isDartAsyncFuture;
-      final toolName = _extractToolName(toolAnnotation, element.name ?? 'unnamed', toolPrefix);
+      final toolName = _extractToolName(
+        toolAnnotation,
+        element.name ?? 'unnamed',
+        toolPrefix,
+      );
 
       tools.add(<String, dynamic>{
         'name': toolName,
@@ -115,7 +123,23 @@ class McpBuilder extends Builder {
         final description = _extractDescription(toolAnnotation, method);
         final parameters = _extractParametersFromElement(method);
         final isAsync = method.returnType.isDartAsyncFuture;
-        final toolName = _extractToolName(toolAnnotation, method.name ?? 'unnamed', toolPrefix);
+        
+        // Get base tool name
+        String toolName = _extractToolName(
+          toolAnnotation,
+          method.name ?? 'unnamed',
+          null, // Don't apply prefix yet
+        );
+        
+        // Apply auto class prefix if enabled
+        if (autoClassPrefix && element.name != null) {
+          toolName = '${element.name}_$toolName';
+        }
+        
+        // Apply custom tool prefix if provided
+        if (toolPrefix != null && toolPrefix.isNotEmpty) {
+          toolName = '$toolPrefix$toolName';
+        }
 
         tools.add(<String, dynamic>{
           'name': toolName,
@@ -133,10 +157,11 @@ class McpBuilder extends Builder {
 
   /// Extracts tools from the current library and all package-local imports.
   /// Each tool is annotated with sourceImport and sourceAlias.
-  /// Applies the toolPrefix to all extracted tool names.
+  /// Applies the toolPrefix and autoClassPrefix to all extracted tool names.
   Future<List<Map<String, dynamic>>> _extractAllTools(
     LibraryElement library,
     String? toolPrefix,
+    bool autoClassPrefix,
   ) async {
     final allTools = <Map<String, dynamic>>[];
     final aliasCounts = <String, int>{};
@@ -146,7 +171,7 @@ class McpBuilder extends Builder {
     final packageName = _extractPackageName(currentPackageUri);
 
     // Extract tools from the current library (@Mcp file itself)
-    final currentLibTools = await _extractToolsFromLibrary(library, toolPrefix);
+    final currentLibTools = await _extractToolsFromLibrary(library, toolPrefix, autoClassPrefix);
     final currentAlias = _deriveAlias(currentPackageUri);
     for (final tool in currentLibTools) {
       tool['sourceImport'] = currentPackageUri;
@@ -167,8 +192,12 @@ class McpBuilder extends Builder {
       final importedPackageName = _extractPackageName(importedUri);
       if (importedPackageName != packageName) continue;
 
-      // Extract tools from this imported library (also apply prefix)
-      final importedTools = await _extractToolsFromLibrary(importedLib, toolPrefix);
+      // Extract tools from this imported library (also apply prefix and auto class prefix)
+      final importedTools = await _extractToolsFromLibrary(
+        importedLib,
+        toolPrefix,
+        autoClassPrefix,
+      );
       if (importedTools.isEmpty) continue;
 
       // Derive alias and ensure uniqueness
@@ -252,7 +281,7 @@ class McpBuilder extends Builder {
   ) {
     final reader = ConstantReader(toolAnnotation);
     final nameField = reader.peek('name');
-    
+
     // Use custom name if provided, otherwise use method name
     String toolName = methodName;
     if (nameField != null && nameField.isString) {
@@ -261,12 +290,12 @@ class McpBuilder extends Builder {
         toolName = customName;
       }
     }
-    
+
     // Apply prefix if provided
     if (toolPrefix != null && toolPrefix.isNotEmpty) {
       toolName = '$toolPrefix$toolName';
     }
-    
+
     return toolName;
   }
 
@@ -912,6 +941,56 @@ class McpBuilder extends Builder {
     final prefixField = reader.peek('toolPrefix');
     if (prefixField != null) {
       return prefixField.stringValue;
+    }
+    return null;
+  }
+
+  /// Finds the auto class prefix setting from @Mcp annotations in the library.
+  ///
+  /// Searches through top-level functions, classes, and methods for @Mcp
+  /// annotations and extracts the autoClassPrefix parameter. When true,
+  /// tool names are automatically prefixed with their class name.
+  ///
+  /// Returns false if no setting is explicitly specified.
+  bool _findAutoClassPrefix(LibraryElement library) {
+    const mcpChecker = TypeChecker.fromUrl(
+      'package:easy_mcp_annotations/mcp_annotations.dart#Mcp',
+    );
+
+    // Check top-level functions
+    for (final element in library.topLevelFunctions) {
+      final annotation = mcpChecker.firstAnnotationOf(element);
+      if (annotation != null) {
+        final autoPrefix = _extractAutoClassPrefixFromAnnotation(annotation);
+        if (autoPrefix != null) return autoPrefix;
+      }
+    }
+
+    // Check classes
+    for (final element in library.classes) {
+      final annotation = mcpChecker.firstAnnotationOf(element);
+      if (annotation != null) {
+        final autoPrefix = _extractAutoClassPrefixFromAnnotation(annotation);
+        if (autoPrefix != null) return autoPrefix;
+      }
+      // Check methods within classes
+      for (final method in element.methods) {
+        final methodAnnotation = mcpChecker.firstAnnotationOf(method);
+        if (methodAnnotation != null) {
+          final autoPrefix = _extractAutoClassPrefixFromAnnotation(methodAnnotation);
+          if (autoPrefix != null) return autoPrefix;
+        }
+      }
+    }
+
+    return false; // Default to false for backward compatibility
+  }
+
+  bool? _extractAutoClassPrefixFromAnnotation(DartObject annotation) {
+    final reader = ConstantReader(annotation);
+    final autoPrefixField = reader.peek('autoClassPrefix');
+    if (autoPrefixField != null) {
+      return autoPrefixField.boolValue;
     }
     return null;
   }
