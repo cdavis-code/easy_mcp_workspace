@@ -18,12 +18,10 @@
 
 ## Update Summary
 **Changes Made**
-- Updated McpBuilder class documentation to reflect the extensive rewrite with 738 lines of new functionality
-- Enhanced SchemaBuilder documentation to cover robust type conversion capabilities
-- Updated template system documentation to include sophisticated transport detection logic
-- Added comprehensive coverage of HTTP transport configuration with port and address settings
-- Expanded transport detection logic documentation including sophisticated enum handling
-- Updated builder architecture to reflect improved AST analysis and annotation processing
+- Updated Template System Architecture section to reflect bug fix for method name resolution in StdioTemplate and HttpTemplate classes
+- Enhanced Auto-class Prefix functionality documentation to clarify correct method name handling
+- Updated Detailed Component Analysis to include improved template method resolution logic
+- Added comprehensive coverage of autoClassPrefix integration with template method calls
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -64,7 +62,7 @@ ANNOT_SPEC["packages/easy_mcp_annotations/pubspec.yaml"]
 end
 subgraph "Generator Package"
 GEN_LIB["mcp_generator.dart<br/>exports builder"]
-BUILDER["mcp_builder.dart<br/>Enhanced Builder with 738 lines"]
+BUILDER["mcp_builder.dart<br/>Enhanced Builder with 1011 lines"]
 TEMPLATES["templates.dart<br/>Stdio/HTTP templates with transport detection"]
 SCHEMA["schema_builder.dart<br/>Robust JSON Schema builder"]
 DOCX["doc_extractor.dart<br/>Doc comment extraction"]
@@ -92,13 +90,13 @@ ANNOT_SPEC --> BUILDER
 **Diagram sources**
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
 - [packages/easy_mcp_generator/lib/mcp_generator.dart:1-14](file://packages/easy_mcp_generator/lib/mcp_generator.dart#L1-L14)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L738)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:1-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L630)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:1-1011](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L1011)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:1-632](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L632)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
 - [packages/easy_mcp_generator/lib/builder/doc_extractor.dart:1-106](file://packages/easy_mcp_generator/lib/builder/doc_extractor.dart#L1-L106)
 - [packages/easy_mcp_generator/lib/stubs.dart:1-7](file://packages/easy_mcp_generator/lib/stubs.dart#L1-L7)
 - [packages/easy_mcp_generator/build.yaml:1-12](file://packages/easy_mcp_generator/build.yaml#L1-L12)
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L141)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:1-302](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L302)
 
 **Section sources**
 - [pubspec.yaml:1-64](file://pubspec.yaml#L1-L64)
@@ -120,11 +118,12 @@ Key responsibilities:
 - Optional JSON metadata emission with tool schema generation
 - Package URI handling for asset and package URIs
 - Advanced type checking for custom classes and nullable types
+- **Auto-class prefix support**: Automatic method name resolution when autoClassPrefix is enabled
 
 **Section sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:7-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L7-L141)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L738)
-- [packages/easy_mcp_generator/lib/builder/templates.dart:1-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L630)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:7-302](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L7-L302)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-1011](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L1011)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:1-632](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L632)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
 - [packages/easy_mcp_generator/lib/builder/doc_extractor.dart:1-106](file://packages/easy_mcp_generator/lib/builder/doc_extractor.dart#L1-L106)
 - [packages/easy_mcp_generator/lib/stubs.dart:1-7](file://packages/easy_mcp_generator/lib/stubs.dart#L1-L7)
@@ -140,7 +139,7 @@ The generator is a build_runner Builder that:
 ```mermaid
 sequenceDiagram
 participant BR as "build_runner"
-participant MS as "McpBuilder (738 lines)"
+participant MS as "McpBuilder (1011 lines)"
 participant RES as "Resolver"
 participant LIB as "LibraryElement"
 participant AN as "Analyzer (TypeChecker)"
@@ -154,6 +153,7 @@ AN-->>MS : "annotations + elements"
 MS->>MS : "_extractAllTools() with alias management"
 MS->>MS : "_introspectType() with cycle detection"
 MS->>MS : "_findTransport(), _findPort(), _findAddress()"
+MS->>MS : "autoClassPrefix handling for method resolution"
 MS->>TPL : "StdioTemplate.generate() or HttpTemplate.generate()"
 TPL-->>MS : "generated code with transport config"
 MS->>OUT : "write .mcp.dart"
@@ -162,7 +162,7 @@ MS->>OUT : "write .mcp.json"
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:34-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L77)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:34-83](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L83)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:21-189](file://packages/easy_mcp_generator/lib/builder/templates.dart#L21-L189)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:311-538](file://packages/easy_mcp_generator/lib/builder/templates.dart#L311-L538)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:329-425](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L329-L425)
@@ -173,15 +173,17 @@ MS->>OUT : "write .mcp.json"
 - **@Mcp** defines transport mode (stdio/http), port, address, and whether to emit JSON metadata
 - **@Tool** annotates functions/classes with optional description, icons, and execution metadata
 - Both are defined in the annotations package and consumed by the enhanced builder
+- **Auto-class prefix support**: New `autoClassPrefix` parameter automatically prefixes tool names with their class names
 
 Implementation highlights:
 - **Enum McpTransport** controls stdio vs HTTP generation with comprehensive documentation
 - **Transport Configuration**: Port (default 3000) and address (default '127.0.0.1') for HTTP transport
 - **Tool Support**: Optional metadata; doc comments are used as fallback descriptions
 - **Execution Metadata**: Deprecated placeholder for future execution parameter support
+- **Auto-class prefix**: When enabled, tools defined in classes become `ClassName_methodName` instead of just `methodName`
 
 **Section sources**
-- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:7-141](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L7-L141)
+- [packages/easy_mcp_annotations/lib/mcp_annotations.dart:7-302](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L7-L302)
 
 ### Enhanced Builder and AST Analysis
 The McpBuilder integrates analyzer to reliably discover annotations and extract metadata with sophisticated transport detection:
@@ -191,6 +193,7 @@ The McpBuilder integrates analyzer to reliably discover annotations and extract 
 - Resolves package-local imports to aggregate tools across the workspace with alias management
 - Determines transport mode, port, and address configuration with sophisticated detection logic
 - Handles asset URIs and package URIs for comprehensive import resolution
+- **Auto-class prefix processing**: Correctly handles method name resolution when autoClassPrefix is enabled
 
 Key processing steps:
 - Library-level checks for @Mcp with transport detection and HTTP configuration extraction
@@ -199,6 +202,7 @@ Key processing steps:
 - Cross-library import scanning with alias derivation and uniqueness management
 - Transport selection (stdio/http) and JSON metadata emission control
 - Package URI extraction and asset URI handling for flexible import resolution
+- **Auto-class prefix application**: When enabled, modifies tool names to include class prefixes while preserving original method names for execution
 
 ```mermaid
 flowchart TD
@@ -209,7 +213,8 @@ HasMcp --> |No| Exit
 HasMcp --> |Yes| ExtractTools["_extractAllTools() with alias management"]
 ExtractTools --> ToolsFound{"Any tools found?"}
 ToolsFound --> |No| Exit
-ToolsFound --> |Yes| Transport["_findTransport() with enum detection"]
+ToolsFound --> |Yes| AutoPrefix["Apply autoClassPrefix if enabled"]
+AutoPrefix --> Transport["_findTransport() with enum detection"]
 Transport --> HttpConfig["_findPort(), _findAddress()"]
 HttpConfig --> GenCode["Render template (stdio/http)"]
 GenCode --> WriteDart["Write .mcp.dart"]
@@ -220,18 +225,20 @@ WriteJson --> Done
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:34-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L77)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:130-182](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L130-L182)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:34-83](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L83)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:138-156](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L138-L156)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:559-624](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L559-L624)
 - [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:634-734](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L634-L734)
 
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L738)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-1011](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L1011)
 
 ### Enhanced Template System Architecture
 The generator ships two transport templates with sophisticated configuration handling:
 - **StdioTemplate**: JSON-RPC over stdin/stdout with comprehensive tool registration
 - **HttpTemplate**: Shelf-based HTTP server with configurable port and address binding
+
+**Updated** Bug fix for method name resolution ensures correct method calls when autoClassPrefix is enabled
 
 Shared capabilities:
 - Imports resolution for custom List inner types and per-tool source imports with alias management
@@ -240,6 +247,7 @@ Shared capabilities:
 - Serialization helpers for results with comprehensive error handling
 - Optional per-tool source import aliasing to avoid conflicts
 - HTTP-specific features: conditional imports, StreamChannel setup, and response buffering
+- **Correct method name resolution**: Templates now properly handle method names when autoClassPrefix is enabled
 
 ```mermaid
 classDiagram
@@ -250,6 +258,7 @@ class McpBuilder {
 +_findTransport(library) String
 +_findPort(library) int
 +_findAddress(library) String
++_findAutoClassPrefix(library) bool
 }
 class StdioTemplate {
 +generate(tools) String
@@ -279,13 +288,13 @@ HttpTemplate --> SchemaBuilder : "uses"
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L738)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-1011](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L1011)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:15-280](file://packages/easy_mcp_generator/lib/builder/templates.dart#L15-L280)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:303-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L303-L630)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:2-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L2-L99)
 
 **Section sources**
-- [packages/easy_mcp_generator/lib/builder/templates.dart:1-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L630)
+- [packages/easy_mcp_generator/lib/builder/templates.dart:1-632](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L632)
 
 ### Robust Schema Builder Component
 The SchemaBuilder converts Dart types and introspected metadata into comprehensive JSON Schema expressions:
@@ -354,17 +363,20 @@ From annotated code to generated server with sophisticated transport configurati
 6. Optional JSON metadata emitted for tool schemas with comprehensive tool listing
 7. Generated files placed next to source with proper import resolution
 
+**Updated** Auto-class prefix method name resolution ensures correct method calls when autoClassPrefix is enabled
+
 ```mermaid
 sequenceDiagram
 participant Dev as "Developer"
 participant BR as "build_runner"
-participant MB as "McpBuilder (738 lines)"
+participant MB as "McpBuilder (1011 lines)"
 participant T as "Templates"
 participant SB as "SchemaBuilder"
 participant Out as "Outputs"
 Dev->>BR : "dart run build_runner build/watch"
 BR->>MB : "process .dart"
 MB->>MB : "discover @Mcp/@Tool with transport detection"
+MB->>MB : "apply autoClassPrefix if enabled"
 MB->>SB : "_introspectType() with cycle detection"
 SB-->>MB : "Comprehensive Schema.* expressions"
 MB->>MB : "_findTransport(), _findPort(), _findAddress()"
@@ -374,7 +386,7 @@ MB->>Out : ".mcp.dart + optional .mcp.json"
 ```
 
 **Diagram sources**
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:34-77](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L77)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:34-83](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L34-L83)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:21-189](file://packages/easy_mcp_generator/lib/builder/templates.dart#L21-L189)
 - [packages/easy_mcp_generator/lib/builder/templates.dart:311-538](file://packages/easy_mcp_generator/lib/builder/templates.dart#L311-L538)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:329-425](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L329-L425)
@@ -398,7 +410,7 @@ Internal relationships:
 
 ```mermaid
 graph LR
-A["mcp_builder.dart (738 lines)"] --> T["templates.dart"]
+A["mcp_builder.dart (1011 lines)"] --> T["templates.dart"]
 A --> S["schema_builder.dart"]
 A --> D["doc_extractor.dart"]
 A --> ST["stubs.dart"]
@@ -432,6 +444,7 @@ PANN["packages/easy_mcp_annotations/pubspec.yaml"] --> A
 - **Watch mode**: Use --watch to regenerate on change; monitor memory usage in large projects with enhanced incremental processing
 - **Transport detection**: Enum handling and HTTP configuration extraction are optimized for performance with minimal overhead
 - **Package URI handling**: Asset and package URI processing is optimized for different URI schemes with efficient parsing
+- **Auto-class prefix processing**: Method name resolution optimization when autoClassPrefix is enabled reduces unnecessary computation
 
 ## Troubleshooting Guide
 Common issues and remedies:
@@ -450,6 +463,10 @@ Common issues and remedies:
 - **JSON metadata not generated**:
   - Ensure @Mcp.generateJson is true with comprehensive boolean checking
   - Check that tools have proper descriptions and parameters with enhanced metadata extraction
+- **Auto-class prefix issues**:
+  - **Updated** Method name resolution now works correctly when autoClassPrefix is enabled
+  - Tools with autoClassPrefix should generate correct method calls in both stdio and HTTP templates
+  - Verify that class names and method names are properly separated in generated code
 - **Debugging generated code**:
   - Inspect .mcp.dart and .mcp.json outputs with comprehensive schema validation
   - Temporarily add logging in templates or builder for visibility with enhanced debugging support
@@ -465,7 +482,9 @@ Common issues and remedies:
 - [packages/easy_mcp_generator/README.md:56-76](file://packages/easy_mcp_generator/README.md#L56-L76)
 
 ## Conclusion
-Easy MCP's code generation engine has been significantly enhanced with a robust SchemaBuilder class, sophisticated transport detection logic, and comprehensive template system supporting both HTTP and stdio transports. The 738-line McpBuilder class provides extensive functionality for annotation discovery, parameter introspection, and transport-specific code generation. By leveraging enhanced analyzer integration for annotation discovery, comprehensive Dart-to-JSON Schema mapping with cycle detection, and flexible transport configuration, it enables rapid prototyping and production deployment of MCP servers. The modular design allows extension through custom templates and schema rules while maintaining strong defaults for common use cases.
+Easy MCP's code generation engine has been significantly enhanced with a robust SchemaBuilder class, sophisticated transport detection logic, and comprehensive template system supporting both HTTP and stdio transports. The 1011-line McpBuilder class provides extensive functionality for annotation discovery, parameter introspection, and transport-specific code generation. By leveraging enhanced analyzer integration for annotation discovery, comprehensive Dart-to-JSON Schema mapping with cycle detection, and flexible transport configuration, it enables rapid prototyping and production deployment of MCP servers. The modular design allows extension through custom templates and schema rules while maintaining strong defaults for common use cases.
+
+**Updated** Recent improvements include enhanced method name resolution when autoClassPrefix is enabled, ensuring correct method calls in both stdio and HTTP template generation.
 
 ## Appendices
 
@@ -494,4 +513,4 @@ Easy MCP's code generation engine has been significantly enhanced with a robust 
 - [packages/easy_mcp_generator/lib/builder/templates.dart:303-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L303-L630)
 - [packages/easy_mcp_generator/lib/builder/schema_builder.dart:1-99](file://packages/easy_mcp_generator/lib/builder/schema_builder.dart#L1-L99)
 - [packages/easy_mcp_generator/lib/builder/doc_extractor.dart:72-105](file://packages/easy_mcp_generator/lib/builder/doc_extractor.dart#L72-L105)
-- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-738](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L738)
+- [packages/easy_mcp_generator/lib/builder/mcp_builder.dart:27-1011](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L27-L1011)

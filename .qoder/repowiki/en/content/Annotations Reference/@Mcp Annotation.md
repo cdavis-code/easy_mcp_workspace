@@ -20,11 +20,12 @@
 
 ## Update Summary
 **Changes Made**
-- Updated @Mcp annotation documentation to include the new `toolPrefix` and `autoClassPrefix` parameters
-- Added comprehensive coverage of tool organization and namespace isolation capabilities
-- Enhanced examples showing hierarchical naming schemes and best practices for avoiding collisions
-- Updated parameter validation rules and inheritance behavior to include the new parameters
+- Updated @Mcp annotation documentation to include the new `autoClassPrefix` parameter
+- Enhanced tool naming capabilities documentation with comprehensive examples
+- Added detailed coverage of hierarchical naming schemes combining `toolPrefix` and `autoClassPrefix`
+- Updated parameter validation rules and inheritance behavior to include the new parameter
 - Added practical examples demonstrating transport-specific configurations and their effects on generated server code
+- Documented best practices for collision prevention using automatic class-based tool naming
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -41,7 +42,7 @@
 ## Introduction
 This document explains the @Mcp annotation and its role in configuring MCP server generation. It focuses on transport configuration (McpTransport.stdio vs McpTransport.http), HTTP server configuration with port and address parameters, JSON-RPC protocol setup for stdio, and the generateJson parameter that controls schema metadata generation. The documentation now includes the new toolPrefix and autoClassPrefix parameters that provide advanced tool organization and namespace isolation capabilities. It also documents parameter validation, defaults, inheritance behavior, and practical examples of how transport selection affects generated server code.
 
-**Updated** Version 0.2.2 introduces enhanced tool naming capabilities with improved namespace isolation and collision avoidance.
+**Updated** Version 0.2.2 introduces enhanced tool naming capabilities with improved namespace isolation and collision avoidance through automatic class-based tool naming.
 
 ## Project Structure
 The repository is a Dart workspace with two primary packages:
@@ -78,7 +79,7 @@ F --> A
 **Diagram sources**
 - [mcp_annotations.dart:1-302](file://packages/easy_mcp_annotations/lib/mcp_annotations.dart#L1-L302)
 - [mcp_generator.dart:1-14](file://packages/easy_mcp_generator/lib/mcp_generator.dart#L1-L14)
-- [mcp_builder.dart:1-1000](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L1000)
+- [mcp_builder.dart:1-1011](file://packages/easy_mcp_generator/lib/builder/mcp_builder.dart#L1-L1011)
 - [templates.dart:1-630](file://packages/easy_mcp_generator/lib/builder/templates.dart#L1-L630)
 - [example.dart:1-67](file://example/bin/example.dart#L1-L67)
 - [user_store.dart:1-158](file://example/lib/src/user_store.dart#L1-L158)
@@ -442,7 +443,7 @@ Common issues and resolutions:
 ## Conclusion
 The @Mcp annotation provides a concise way to configure MCP server generation, selecting between stdio and HTTP transports and controlling JSON metadata generation. The addition of toolPrefix and autoClassPrefix parameters significantly enhances tool organization and namespace isolation capabilities. These new parameters enable sophisticated naming schemes that prevent collisions and improve tool discoverability. Understanding how transport selection and configuration parameters influence generated code helps you choose the right mode for your deployment scenario and troubleshoot runtime issues effectively.
 
-**Updated** Version 0.2.2 ensures stable package dependencies and improved compatibility with the latest Dart ecosystem, now including advanced tool naming capabilities.
+**Updated** Version 0.2.2 ensures stable package dependencies and improved compatibility with the latest Dart ecosystem, now including advanced tool naming capabilities with automatic class-based tool naming for collision prevention.
 
 ## Appendices
 
@@ -482,7 +483,7 @@ The @Mcp annotation provides a concise way to configure MCP server generation, s
 
 ### Tool Naming Examples
 - Basic tool prefix: `@Mcp(toolPrefix: 'user_')` → tools named `user_createUser`, `user_deleteUser`
-- Auto class prefix: `@Mcp(autoClassPrefix: true)` → tools named `UserService_createUser`, `TodoService_createTodo`
+- Auto class prefix: `@Mcp(autoClassPrefix: true)` → tools named `UserService_createUser`, `TodoStore_createTodo`
 - Combined prefixes: `@Mcp(toolPrefix: 'api_', autoClassPrefix: true)` → tools named `api_UserService_createUser`
 - Custom tool names override: `@Tool(name: 'custom_name')` → tool named `custom_name` regardless of prefixes
 
