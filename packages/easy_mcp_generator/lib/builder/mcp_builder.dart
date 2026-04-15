@@ -131,7 +131,7 @@ class McpBuilder extends Builder {
           method.name ?? 'unnamed',
           null, // Don't apply prefix yet
         );
-        
+
         // Build final tool name with prefixes
         String toolName = baseToolName;
 

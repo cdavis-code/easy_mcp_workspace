@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-04-15
+
+### Added
+- Added `autoClassPrefix` parameter documentation to SKILL.md
+- Updated skill documentation with examples for all naming options
+
 ## [0.4.0] - 2026-04-15
 
 ### Added

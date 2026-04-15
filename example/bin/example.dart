@@ -3,11 +3,7 @@ import 'package:easy_mcp_annotations/mcp_annotations.dart';
 import 'package:mcp_example/src/user_store.dart';
 import 'package:mcp_example/src/todo_store.dart';
 
-@Mcp(
-  transport: McpTransport.http,
-  port: 8080,
-  address: '0.0.0.0',
-)
+@Mcp(transport: McpTransport.http, port: 8080, address: '0.0.0.0')
 Future<void> main() async {
   // Seed some initial data if the stores are empty
   final existingUsers = await UserStore.listUsers();
