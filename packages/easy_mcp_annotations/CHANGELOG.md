@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-04-15
+
+### Changed
+- Updated README with absolute logo URL for pub.dev compatibility
+- Added Buy Me a Coffee image button
+- Added reference to easy_mcp_generator package in installation section
+
 ## [0.4.1] - 2026-04-15
 
 ### Added

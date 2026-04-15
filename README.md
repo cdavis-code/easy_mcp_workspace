@@ -23,11 +23,11 @@ Easy MCP allows you to expose Dart library functions as MCP tools using simple a
 
 ```yaml
 dependencies:
-  easy_mcp_annotations: ^0.4.0
+  easy_mcp_annotations: ^0.4.2
 
 dev_dependencies:
   build_runner: ^2.4.0
-  easy_mcp_generator: ^0.4.0
+  easy_mcp_generator: ^0.4.2
 ```
 
 ### 2. Annotate Your Functions
